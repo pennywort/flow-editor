@@ -1,6 +1,11 @@
 import { BaseNodeModel, BaseNodeData, NodeButton } from './BaseNodeModel';
 
-export class ButtonNodeModel extends BaseNodeModel {
+export type ButtonNodeData = {
+    richText: string;
+    buttons?: NodeButton[];
+} & BaseNodeData;
+
+export class ButtonNodeModel extends BaseNodeModel<ButtonNodeData> {
     constructor(
         id: string,
         label: string,

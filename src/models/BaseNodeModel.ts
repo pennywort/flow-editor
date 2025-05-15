@@ -1,5 +1,5 @@
-import { Node, Position } from '@xyflow/react';
-import * as React from "react";
+import { Node } from '@xyflow/react';
+import React from "react";
 
 export interface NodeButton {
     label: string;
@@ -10,11 +10,9 @@ export interface NodeButton {
 
 export interface BaseNodeData extends Record<string, unknown> {
     label: string;
-    richText: string;
-    buttons?: NodeButton[];
 }
 
-export abstract class BaseNodeModel<T extends BaseNodeData = BaseNodeData> implements Node<T> {
+export class BaseNodeModel<T extends BaseNodeData = BaseNodeData> implements Node<T> {
     id: string;
     type: string;
     position: { x: number; y: number };
@@ -37,11 +35,11 @@ export abstract class BaseNodeModel<T extends BaseNodeData = BaseNodeData> imple
 
     protected getBaseStyle(customStyles?: React.CSSProperties): React.CSSProperties {
         return {
-            backgroundColor: '#000',
+            backgroundColor: 'rgb(0, 0, 0)',
+            paddingLeft: '3px',
             color: '#fff',
-            padding: '5px 0px 5px 3px',
             borderRadius: 8,
-            width: 285,
+            width: 280,
             ...customStyles,
         };
     }
