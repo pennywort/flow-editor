@@ -1,17 +1,45 @@
-import React from 'react';
+import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { BaseNode } from '../BaseNode/BaseNode';
 import { ButtonNodeData } from '../../../models/ButtonNodeModel';
 import { NodeButton } from '../../../models/BaseNodeModel';
-import { buttonNodeStyles } from './styles';
 import externalIcon from './external.svg';
+import CollapseIcon from "../../CollapseIcon/CollapseIcon";
+import { useCollapse } from "../../hooks";
+
+import * as styles from './styles';
 
 export type ButtonNodeType = Node<ButtonNodeData>;
 export type ButtonNodeProps = NodeProps<ButtonNodeType> & {
     onDelete?: () => void;
     onEdit?: () => void;
 };
+
+const ExternalButton: React.FC<{ label: string }> = ({ label }) => (
+    <div style={styles.link}>
+        <img src={externalIcon} alt={''} />
+        <ReactMarkdown
+            components={{
+                a: (props) => (
+                    <a
+                        {...props}
+                        style={styles.externalLink}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {props.children}
+                    </a>
+                ),
+                p: ({ children }) => (
+                    <span style={styles.labelEllipsis}>{children}</span>
+                ),
+            }}
+        >
+            {label}
+        </ReactMarkdown>
+    </div>
+);
 
 export const ButtonNode: React.FC<ButtonNodeProps> = ({
                                                           data,
@@ -21,6 +49,8 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
                                                           onEdit,
                                                           ...rest
                                                       }) => {
+    const { expanded, toggle, displayedText, needCollapse } = useCollapse(data.richText || '', 128);
+
     return (
         <BaseNode
             data={data}
@@ -33,33 +63,36 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
             <ReactMarkdown
                 components={{
                     a: (props) => (
-                        <a {...props} style={{ color: '#4CAF50' }} target="_blank" rel="noreferrer" />
+                        <a {...props}
+                           style={styles.externalLink}
+                           target="_blank"
+                           rel="noreferrer">{props.children}</a>
                     ),
                 }}
             >
-                {data.richText}
+                {displayedText}
             </ReactMarkdown>
-            <div style={buttonNodeStyles.buttonsContainer}>
+            {needCollapse && (
+                <div style={styles.collapseIconRow}>
+                    <CollapseIcon expanded={expanded} onClick={toggle} />
+                </div>
+            )}
+            <div style={styles.buttonsContainer}>
                 {(data.buttons ?? []).map((btn: NodeButton, i: number) => (
-                    <div key={i} style={buttonNodeStyles.buttonWrapper}>
+                    <div key={i} style={styles.buttonWrapper}>
                         {btn.target && (
                             <Handle
                                 type="source"
                                 position={Position.Right}
                                 id={`btn-${i}`}
-                                style={buttonNodeStyles.handle}
+                                style={styles.handle}
                             />
                         )}
                         {btn.external ? (
-                            <div style={buttonNodeStyles.link}>
-                                <img src={externalIcon} alt={''} style={{ marginRight: 4 }} />
-                                <span style={buttonNodeStyles.labelEllipsis} title={btn.label}>
-                                    {btn.label}
-                                </span>
-                            </div>
+                            <ExternalButton label={btn.label} />
                         ) : (
-                            <button style={buttonNodeStyles.button}>
-                                <span style={buttonNodeStyles.labelEllipsis} title={btn.label}>
+                            <button style={styles.button}>
+                                <span style={styles.labelEllipsis} title={btn.label}>
                                     {btn.label}
                                 </span>
                             </button>
@@ -70,3 +103,5 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
         </BaseNode>
     );
 };
+
+export default memo(ButtonNode);

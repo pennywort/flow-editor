@@ -5,11 +5,14 @@ export interface NodeButton {
     label: string;
     target?: string;
     external?: boolean;
-    href?: string;
 }
 
 export interface BaseNodeData extends Record<string, unknown> {
     label: string;
+    parent_message?: string;
+    back_label?: string;
+    delete_id?: string;
+    delete_label?: string;
 }
 
 export class BaseNodeModel<T extends BaseNodeData = BaseNodeData> implements Node<T> {

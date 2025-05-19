@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`roundtrip conversion nodes → yaml → nodes2 → yaml2 сохраняет структуру: nodes2-after-roundtrip 1`] = `
+Array [
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "external": false,
+          "label": "Категория 1",
+          "target": "first_category",
+        },
+        Object {
+          "external": false,
+          "label": "Категория 2",
+          "target": "second_category",
+        },
+      ],
+      "label": "",
+      "richText": "Привет, я бот - навигатор по базе знаний \\"Сервисы ИБ Фабрики Данных\\".",
+    },
+    "id": "menu",
+    "position": Object {
+      "x": 50,
+      "y": 50,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "external": false,
+          "label": "Перейти в Категорию 2",
+          "target": "first_button_1",
+        },
+      ],
+      "label": "Категория 1",
+      "richText": "Текст категории 1",
+    },
+    "id": "first_category",
+    "position": Object {
+      "x": 300,
+      "y": 50,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "external": true,
+          "href": "https://example.com",
+          "label": "Внешний ресурс",
+        },
+      ],
+      "label": "Категория 2",
+      "richText": "Текст категории 2",
+    },
+    "id": "second_category",
+    "position": Object {
+      "x": 340,
+      "y": 150,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [],
+      "label": "Перейти в Категорию 2",
+      "richText": "...",
+    },
+    "id": "first_button_1",
+    "position": Object {
+      "x": 420,
+      "y": 350,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+]
+`;
+
+exports[`roundtrip conversion nodes → yaml → nodes2 → yaml2 сохраняет структуру: yaml2-after-roundtrip 1`] = `
+"id: menu
+text: Привет, я бот - навигатор по базе знаний \\"Сервисы ИБ Фабрики Данных\\".
+back_label: Назад
+delete_id: delete_menu
+delete_label: Отмена
+child_messages:
+  - first_category
+  - second_category
+messages:
+  - id: first_category
+    label: Категория 1
+    text: Текст категории 1
+    child_messages:
+      - first_button_1
+  - id: second_category
+    label: Категория 2
+    text: Текст категории 2
+  - id: \\"\\"
+    label: \\"[Внешний ресурс](https://example.com)\\"
+    text: \\"\\"
+    parent_message: second_category
+    is_link_button: true
+  - id: first_button_1
+    label: Перейти в Категорию 2
+    text: ...
+"
+`;

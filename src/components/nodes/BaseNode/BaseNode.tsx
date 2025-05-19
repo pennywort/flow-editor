@@ -6,14 +6,16 @@ import editIcon from './edit.svg';
 
 export type BaseNodeType = Node<{ label: string }>;
 export type BaseNodeProps = NodeProps<BaseNodeType> & {
-    children: React.ReactNode;
+    children?: ReactNode;
+    text?: string;
     style?: { container: CSSProperties, label: CSSProperties };
     onDelete?: () => void;
     onEdit?: () => void;
 };
 
-export function BaseNode(props: BaseNodeProps ) {
-    const { data, children, style, onDelete, onEdit } = props;
+export function BaseNode(props: BaseNodeProps) {
+    const { data, children, text, style, onDelete, onEdit } = props;
+
     const mergedContainerStyles = { ...baseNodeStyles.nodeContainer, ...style?.container };
     const mergedLabelStyles = { ...baseNodeStyles.labelContainer, ...style?.label };
 
@@ -30,8 +32,9 @@ export function BaseNode(props: BaseNodeProps ) {
             </div>
             <div style={mergedContainerStyles}>
                 <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
-                {children}
+                {text ? text : children}
             </div>
         </div>
     );
 }
+

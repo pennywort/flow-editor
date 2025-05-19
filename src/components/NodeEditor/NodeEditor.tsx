@@ -107,14 +107,6 @@ export default function NodeEditor({ node, onSave, onClose }: Props) {
                             style={{ flex: 1, padding: 4, borderRadius: 4, border: "1px solid #666" }}
                             placeholder={btn.external ? "Текст ссылки" : "Текст кнопки"}
                         />
-                        {btn.external ? (
-                            <input
-                                value={btn.href ?? ""}
-                                onChange={(e) => handleButtonChange(i, "href", e.target.value)}
-                                style={{ flex: 2, padding: 4, borderRadius: 4, border: "1px solid #666" }}
-                                placeholder="URL"
-                            />
-                        ) : null}
                         <button onClick={() => handleDeleteButton(i)} style={{ color: "red" }}>
                             ✖
                         </button>

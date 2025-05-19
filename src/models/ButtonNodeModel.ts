@@ -1,6 +1,7 @@
 import { BaseNodeModel, BaseNodeData, NodeButton } from './BaseNodeModel';
 
 export type ButtonNodeData = {
+    label: string;
     richText: string;
     buttons?: NodeButton[];
 } & BaseNodeData;

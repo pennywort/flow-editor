@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState, useMemo } from 'react';
 import {
     ReactFlow,
     Background,
@@ -6,7 +6,6 @@ import {
     MiniMap,
     MarkerType,
     useNodesState,
-    useEdgesState,
     Node,
     Edge,
 } from '@xyflow/react';
@@ -14,23 +13,31 @@ import "@xyflow/react/dist/style.css";
 
 import { ButtonNodeModel, ButtonNodeData } from "../../models/ButtonNodeModel";
 import { NodeButton } from "../../models/BaseNodeModel";
-import { ButtonNode } from "../nodes/ButtonNode/ButtonNode";
 import NodeEditor from "../NodeEditor/NodeEditor";
+import { yamlToNodes } from "../../utils/yamlToNodes";
+import { getLayoutedElements } from "../../utils/autoLayout";
+import ButtonNode from "../nodes/ButtonNode/ButtonNode";
 
-// Фабрика nodeTypes вне компонента
+import {
+    panelContainer,
+    saveButton,
+    autoLayoutButton,
+    uploadButton,
+    select as selectStyle,
+    rootContainer, miniMapContainer,
+} from "./styles";
+
 export const nodeTypes = {
     textWithButtons: ButtonNode,
 };
 
 const STORAGE_KEY = "flow_nodes_v1";
 
-// Автоматическая инициализация label для всех блоков (особенно если грузим старые данные)
 function getInitialNodes(): Node<ButtonNodeData>[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
         try {
             const nodes: Node<ButtonNodeData>[] = JSON.parse(raw);
-            // Находим для каждого id label по кнопкам-родителям
             const idToLabel: Record<string, string> = {};
             nodes.forEach(n =>
                 (n.data.buttons ?? []).forEach(btn => {
@@ -48,7 +55,6 @@ function getInitialNodes(): Node<ButtonNodeData>[] {
             }));
         } catch {}
     }
-    // дефолтные
     return [
         new ButtonNodeModel(
             '1',
@@ -58,7 +64,7 @@ function getInitialNodes(): Node<ButtonNodeData>[] {
             [
                 { label: 'Действие 1', target: '2' },
                 { label: 'Действие 2', target: '3' },
-                { label: 'Внешняя ссылка', external: true, href: 'https://yandex.ru' },
+                { label: 'Внешняя ссылка', external: true },
             ]
         ),
         new ButtonNodeModel('2', 'Действие 1', { x: 500, y: 30 }, `**Ответ по действию 1**`),
@@ -70,10 +76,10 @@ function saveNodesToStorage(nodes: Node<ButtonNodeData>[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
 }
 
-function getEdgesFromNodes(nodes: Node<ButtonNodeData>[]): Edge[] {
+function getEdgesFromNodes(nodes: Node<ButtonNodeData>[], edgeType: string): Edge[] {
     return nodes.flatMap((node) => {
-        const btns = (node.data as ButtonNodeData).buttons ?? [];
-        return btns.map((b: NodeButton, idx: number) => {
+        const nodeButtons = (node.data as ButtonNodeData).buttons ?? [];
+        return nodeButtons.map((b: NodeButton, idx: number) => {
             if (!b.target) return null;
             return {
                 id: `e-${node.id}-btn-${idx}`,
@@ -81,8 +87,7 @@ function getEdgesFromNodes(nodes: Node<ButtonNodeData>[]): Edge[] {
                 target: b.target!,
                 sourceHandle: `btn-${idx}`,
                 targetHandle: null,
-                type: 'smoothstep',
-                animated: false,
+                type: edgeType,
                 markerEnd: {
                     type: MarkerType.Arrow,
                     width: 16,
@@ -98,15 +103,57 @@ function getEdgesFromNodes(nodes: Node<ButtonNodeData>[]): Edge[] {
     });
 }
 
+const EDGE_TYPE_OPTIONS = [
+    { value: "simplebezier", label: "Simple Bezier" },
+    { value: "default", label: "Default" },
+    { value: "step", label: "Step" },
+    { value: "smoothstep", label: "Smooth Step" },
+    { value: "straight", label: "Straight" },
+];
+
 export default function FlowEditor() {
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(getInitialNodes());
-    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(getEdgesFromNodes(getInitialNodes()));
     const [editNodeId, setEditNodeId] = useState<string | null>(null);
+    const [edgeType, setEdgeType] = useState<string>("simplebezier");
+    const edges = useMemo(() => getEdgesFromNodes(nodes, edgeType), [nodes, edgeType]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    React.useEffect(() => {
-        setEdges(getEdgesFromNodes(nodes));
-        // eslint-disable-next-line
-    }, [nodes]);
+    const handleOpenFileDialog = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const yamlText = ev.target?.result as string;
+                const newNodes = yamlToNodes(yamlText);
+                setNodes(newNodes);
+                saveNodesToStorage(newNodes);
+            } catch (err) {
+                alert('Ошибка разбора YAML');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
+    const handleAutoLayout = () => {
+        const newNodes = getLayoutedElements(nodes, edges, 'LR');
+        setNodes(newNodes);
+        saveNodesToStorage(newNodes);
+    };
+
+    const handleSave = () => {
+        saveNodesToStorage(nodes);
+    };
+
+    const handleEdgeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setEdgeType(e.target.value);
+    };
 
     const handleDeleteNode = useCallback((nodeId: string) => {
         setNodes((nds) => {
@@ -136,11 +183,10 @@ export default function FlowEditor() {
         newActions?: { idx: number, id: string, label: string }[]
     ) => {
         setNodes((nds) => {
-            // 1. Обновляем редактируемый блок (текст, кнопки)
             let newNodes = nds.map((n) =>
                 n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n
             );
-            // 2. Для каждой кнопки с target — обновляем label у целевого блока
+
             (data.buttons ?? []).forEach(btn => {
                 if (btn.target) {
                     newNodes = newNodes.map(n =>
@@ -150,7 +196,7 @@ export default function FlowEditor() {
                     );
                 }
             });
-            // 3. Для новых действий — создаём новые блоки с нужным label
+
             if (newActions && newActions.length) {
                 const parentNode = newNodes.find(n => n.id === nodeId);
                 let count = 0;
@@ -173,33 +219,31 @@ export default function FlowEditor() {
         : null;
 
     return (
-        <div style={{ width: '100%', height: '100vh', backgroundColor: 'rgb(30, 30, 30)', position: 'relative' }}>
-            {/* Временная кнопка Сохранить */}
-            <button
-                style={{
-                    position: 'absolute',
-                    top: 12,
-                    left: 12,
-                    zIndex: 10,
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    background: '#007BFF',
-                    color: '#fff',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px #0002'
-                }}
-                onClick={() => saveNodesToStorage(nodes)}
-            >
-                Сохранить
-            </button>
+        <div style={rootContainer}>
+            <div style={panelContainer}>
+                <button style={saveButton} onClick={handleSave}>Сохранить</button>
+                <button style={autoLayoutButton} onClick={handleAutoLayout}>Автораспределить</button>
+                <button style={uploadButton} onClick={handleOpenFileDialog}>Загрузить YAML</button>
+                <input
+                    type="file"
+                    accept=".yaml,.yml"
+                    style={{ display: "none" }}
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                />
+                <select style={selectStyle} value={edgeType} onChange={handleEdgeTypeChange}>
+                    {EDGE_TYPE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </option>
+                    ))}
+                </select>
+            </div>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 colorMode={'dark'}
                 onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
                 nodeTypes={nodeTypes}
                 fitView
                 connectOnClick={false}
@@ -211,7 +255,8 @@ export default function FlowEditor() {
                 <Controls />
                 <MiniMap
                     pannable={true}
-                    style={{ backgroundColor: 'rgb(54,54,54)' }}
+                    zoomable={true}
+                    style={miniMapContainer}
                     maskColor={'rgb(54,54,54)'}
                     bgColor={'rgb(54,54,54)'}
                     nodeBorderRadius={16}
