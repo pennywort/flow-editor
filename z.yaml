@@ -1,0 +1,101 @@
+id: menu
+text: |-
+  Привет, я бот - навигатор по базе знаний "Сервисы ИБ Фабрики Данных".  Моя основная задача - помочь ответить на вопросы по процессам. Переходите в нужный раздел.
+  Если не нашлось ответа на интересующий вопрос, оставь обращение через СберДруг, мы обязательно его рассмотрим: 
+  SberData - сервисы информационной безопасности: [вопросы и ошибки](https://sberfriend.ca.sbrf.ru/sberfriend/#/application/80505D908AA0477AA8E1359E0C1553A9)
+
+child_messages:
+  - first_category
+  - second_category
+  - third_category
+  - fourth_category
+  - five_category
+
+messages:
+  - id: first_category
+    label: 'СУДИС (IPA, Ranger, Papi, SDBA)'
+    text: "Выберите интересующий компонент:"
+    child_messages:
+      - first_button_1
+      - second_button_1
+      - link_button_1
+      - link_button_2
+    parent_message: menu
+  - id: second_category
+    label: 'Журналирование КАП'
+    text: "Сбор событий аудита, расследование инцидентов, хранение истории."
+    child_messages:
+      - first_button_2
+      - second_button_2
+    parent_message: menu
+  - id: third_category
+    label: 'СУСВ (SDP Smart Perimeter)'
+    text: "Платформа для анализа сетевых взаимодействий и изоляции."
+    child_messages:
+      - first_button_3
+      - link_button_3
+    parent_message: menu
+  - id: fourth_category
+    label: 'Сервис Защиты Данных'
+    text: "Защита данных для Hadoop и реляционных БД."
+    child_messages:
+      - first_button_4
+      - second_button_4
+    parent_message: menu
+  - id: five_category
+    label: 'Кибербезопасность'
+    text: "Информация о пользователях и их доступах."
+    child_messages:
+      - first_button_5
+      - second_button_5
+    parent_message: menu
+
+  - id: first_button_1
+    label: 'RedHatIDM (IPA)'
+    text: "Сервис для управления доступами и сертификатами."
+    parent_message: first_category
+  - id: second_button_1
+    label: 'Apache Ranger'
+    text: "Инфраструктура управления безопасностью данных Hadoop."
+    parent_message: first_category
+  - id: first_button_2
+    label: 'Доступ к АС'
+    text: "Получение доступа к просмотру логов."
+    parent_message: second_category
+  - id: second_button_2
+    label: 'Ссылки на сервис'
+    text: "ПРОМ: [sdlogging1.ca.sbrf.ru](https://sdlogging1.ca.sbrf.ru)"
+    parent_message: second_category
+  - id: first_button_3
+    label: 'Доступ в WEB-интерфейс'
+    text: "Ссылка: [susv.ca.sbrf.ru](https://susv.ca.sbrf.ru/)"
+    parent_message: third_category
+  - id: first_button_4
+    label: 'Установка агентов SDG'
+    text: "Установка агентов для защиты данных."
+    parent_message: fourth_category
+  - id: second_button_4
+    label: 'Доступ к АС'
+    text: "Подключение потребителей к сервису SDG."
+    parent_message: fourth_category
+  - id: first_button_5
+    label: 'Как получить доступ'
+    text: "Доступ оформляется через заявку в СберДруг."
+    parent_message: five_category
+  - id: second_button_5
+    label: 'Ссылки на Web-интерфейс'
+    text: "Sigma: [pcb.sigma.sbrf.ru](https://pcb.sigma.sbrf.ru/)"
+    parent_message: five_category
+
+  - id: link_button_1
+    label: '[Документация по SUDIS](https://docs.sber.ru/sudis)'
+    is_link_button: true
+    parent_message: first_category
+  - id: link_button_2
+    label: '[API-интерфейсы](https://api.sber.ru)'
+    is_link_button: true
+    parent_message: first_category
+  - id: link_button_3
+    label: '[Документация SDP](https://confluence.sberbank.ru/pages/viewpage.action?pageId=998099999)'
+    is_link_button: true
+    parent_message: third_category

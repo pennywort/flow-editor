@@ -30,7 +30,6 @@ interface YamlRoot {
 export function nodesToYaml(nodes: Node<ButtonNodeData>[], rootId: string = 'menu'): string {
     const messages: YamlMessage[] = [];
 
-    // Для хранения child_messages корневого блока (root)
     let rootChildMessages: string[] = [];
 
     const rootNode = nodes.find(n => n.id === rootId);

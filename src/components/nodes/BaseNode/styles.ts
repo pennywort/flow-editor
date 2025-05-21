@@ -8,7 +8,7 @@ export const baseNodeStyles: {
     nodeContainer: {
         backgroundColor: 'rgb(8, 8, 8)',
         color: '#fff',
-        paddingTop: '0px',
+        paddingTop: '3px',
         paddingBottom: '10px',
         paddingLeft: '13px',
         borderRadius: 8,

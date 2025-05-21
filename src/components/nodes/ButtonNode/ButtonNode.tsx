@@ -1,61 +1,40 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
-import { BaseNode } from '../BaseNode/BaseNode';
+import BaseNode from "../BaseNode/BaseNode";
 import { ButtonNodeData } from '../../../models/ButtonNodeModel';
 import { NodeButton } from '../../../models/BaseNodeModel';
 import externalIcon from './external.svg';
 import CollapseIcon from "../../CollapseIcon/CollapseIcon";
-import { useCollapse } from "../../hooks";
-
 import * as styles from './styles';
+import { stringCutOff } from "../../../utils";
+import ExternalButton from "./ExternalButton";
 
 export type ButtonNodeType = Node<ButtonNodeData>;
 export type ButtonNodeProps = NodeProps<ButtonNodeType> & {
     onDelete?: () => void;
     onEdit?: () => void;
+    onCollapse?: (nodeId: string, expanded: boolean) => void;
 };
-
-const ExternalButton: React.FC<{ label: string }> = ({ label }) => (
-    <div style={styles.link}>
-        <img src={externalIcon} alt={''} />
-        <ReactMarkdown
-            components={{
-                a: (props) => (
-                    <a
-                        {...props}
-                        style={styles.externalLink}
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        {props.children}
-                    </a>
-                ),
-                p: ({ children }) => (
-                    <span style={styles.labelEllipsis}>{children}</span>
-                ),
-            }}
-        >
-            {label}
-        </ReactMarkdown>
-    </div>
-);
 
 export const ButtonNode: React.FC<ButtonNodeProps> = ({
                                                           data,
-                                                          id,
-                                                          selected,
                                                           onDelete,
                                                           onEdit,
+                                                          onCollapse,
+                                                          id,
                                                           ...rest
                                                       }) => {
-    const { expanded, toggle, displayedText, needCollapse } = useCollapse(data.richText || '', 128);
+    const expanded = !!data.expanded;
+
+    const handleCollapse = useCallback(() => {
+        onCollapse && onCollapse(id, expanded);
+    }, [onCollapse, id, expanded]);
 
     return (
         <BaseNode
-            data={data}
             id={id}
-            selected={selected}
+            data={data}
             onDelete={onDelete}
             onEdit={onEdit}
             {...rest}
@@ -70,11 +49,13 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
                     ),
                 }}
             >
-                {displayedText}
+                {!expanded
+                    ? stringCutOff(data.richText)
+                    : data.richText}
             </ReactMarkdown>
-            {needCollapse && (
+            {data.richText.length > 128 && (
                 <div style={styles.collapseIconRow}>
-                    <CollapseIcon expanded={expanded} onClick={toggle} />
+                    <CollapseIcon expanded={expanded} onClick={handleCollapse} />
                 </div>
             )}
             <div style={styles.buttonsContainer}>

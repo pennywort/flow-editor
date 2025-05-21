@@ -1,0 +1,1 @@
+export { stringCutOff } from './strings'

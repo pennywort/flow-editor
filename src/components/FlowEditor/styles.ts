@@ -51,4 +51,13 @@ export const rootContainer: React.CSSProperties = {
     position: 'relative',
 };
 
-export const miniMapContainer: React.CSSProperties = { backgroundColor: 'rgb(54,54,54)' }
+export const searchPanelContainer: React.CSSProperties = {
+    position: 'absolute',
+    top: 20,
+    right: 30,
+    zIndex: 10,
+    width: 260,
+    pointerEvents: 'auto'
+}
+
+export const miniMapContainer: React.CSSProperties = { backgroundColor: 'rgb(0,0,0)' }

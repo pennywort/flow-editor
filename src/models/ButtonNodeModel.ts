@@ -4,6 +4,7 @@ export type ButtonNodeData = {
     label: string;
     richText: string;
     buttons?: NodeButton[];
+    expanded?: boolean | undefined;
 } & BaseNodeData;
 
 export class ButtonNodeModel extends BaseNodeModel<ButtonNodeData> {

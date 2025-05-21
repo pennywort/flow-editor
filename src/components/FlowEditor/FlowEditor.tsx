@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useMemo } from 'react';
+import React, {useCallback, useRef, useState, useMemo, useEffect} from 'react';
 import {
     ReactFlow,
     Background,
@@ -7,7 +7,7 @@ import {
     MarkerType,
     useNodesState,
     Node,
-    Edge,
+    Edge, useReactFlow,
 } from '@xyflow/react';
 import "@xyflow/react/dist/style.css";
 
@@ -24,12 +24,15 @@ import {
     autoLayoutButton,
     uploadButton,
     select as selectStyle,
-    rootContainer, miniMapContainer,
+    rootContainer,
+    searchPanelContainer,
 } from "./styles";
+import {SearchPanel} from "../SearchPanel/SearchPanel";
+import {useHotkeys} from "../hooks/useHotKeys";
 
-export const nodeTypes = {
-    textWithButtons: ButtonNode,
-};
+// export const nodeTypes = {
+//     textWithButtons: (props: any) => <ButtonNode {...props} />,
+// };
 
 const STORAGE_KEY = "flow_nodes_v1";
 
@@ -112,11 +115,85 @@ const EDGE_TYPE_OPTIONS = [
 ];
 
 export default function FlowEditor() {
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
+
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(getInitialNodes());
     const [editNodeId, setEditNodeId] = useState<string | null>(null);
     const [edgeType, setEdgeType] = useState<string>("simplebezier");
-    const edges = useMemo(() => getEdgesFromNodes(nodes, edgeType), [nodes, edgeType]);
+    const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+    const [currentDirection, setCurrentDirection] = useState<'target' | 'source' | null>('target');
+    const [searchString, setSearchString] = useState<string>('');
+    const [foundNodeIds, setFoundNodeIds] = useState<string[]>([]);
+    const [foundIndex, setFoundIndex] = useState<number>(0);
+
+    useHotkeys([
+        {
+            keys: "ctrl+f|meta+f|command+f",
+            callback: () => searchInputRef.current?.focus(),
+            preventDefault: true,
+        },
+        {
+            keys: "ctrl+z|meta+z|command+z",
+            callback: () => null,
+            preventDefault: true,
+        },
+        {
+            keys: "ctrl+shift+z|meta+shift+z|command+shift+z",
+            callback: () => null,
+            preventDefault: true,
+        },
+    ]);
+
+    useEffect(() => {
+        if (!searchString) {
+            setFoundNodeIds([]);
+            setFoundIndex(0);
+            return;
+        }
+        const lower = searchString.toLowerCase();
+        const ids = nodes
+            .filter(n =>
+                (n.data.label && n.data.label.toLowerCase().includes(lower)) ||
+                ('richText' in n.data && (n.data.richText as string).toLowerCase().includes(lower))
+            )
+            .map(n => n.id);
+        setFoundNodeIds(ids);
+        setFoundIndex(0);
+    }, [searchString, nodes]);
+
+    const reactFlowInstance = useReactFlow();
+
+    const edges = useMemo(() => getEdgesFromNodes(nodes, edgeType).map(edge => ({
+        ...edge,
+        animated: selectedEdgeId === edge.id,
+        style: selectedEdgeId === edge.id
+            ? { ...edge.style, strokeWidth: 3 }
+            : edge.style,
+    })), [nodes, edgeType, selectedEdgeId]);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleCollapseNode = useCallback((nodeId: string, expanded: boolean) => {
+        setNodes((nds) =>
+            nds.map((node) =>
+                node.id === nodeId
+                    ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            expanded: !expanded,
+                        },
+                    }
+                    : node
+            )
+        );
+    }, [setNodes]);
+
+    const nodeTypes = useMemo(() => ({
+        textWithButtons: (props: any) => {
+            return <ButtonNode {...props} onCollapse={handleCollapseNode}/>
+        },
+    }), [handleCollapseNode]);
 
     const handleOpenFileDialog = () => {
         fileInputRef.current?.click();
@@ -149,6 +226,18 @@ export default function FlowEditor() {
 
     const handleSave = () => {
         saveNodesToStorage(nodes);
+    };
+
+    const handleCollapseAll = (expanded: boolean) => {
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    expanded: expanded,
+                }
+            }))
+        );
     };
 
     const handleEdgeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -214,6 +303,39 @@ export default function FlowEditor() {
         setEditNodeId(null);
     };
 
+    const handleEdgeClick = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.stopPropagation();
+            console.log(edge)
+            let nextDirection: 'target' | 'source' = 'target';
+
+            if (selectedEdgeId === edge.id) {
+                nextDirection = currentDirection === 'target' ? 'source' : 'target';
+            }
+
+            setSelectedEdgeId(edge.id);
+            setCurrentDirection(nextDirection);
+
+            // Куда перемещать viewport
+            const nodeId = nextDirection === 'target' ? edge.target : edge.source;
+            const node = nodes.find(n => n.id === nodeId);
+
+            if (node && reactFlowInstance) {
+                reactFlowInstance.setCenter(
+                    node.position.x + 180,
+                    node.position.y + 100,
+                    { zoom: 1.2, duration: 800 }
+                );
+            }
+        },
+        [selectedEdgeId, currentDirection, nodes, reactFlowInstance]
+    );
+
+    const handlePaneClick = useCallback(() => {
+        setSelectedEdgeId(null);
+        setCurrentDirection(null);
+    }, [])
+
     const editingNode = editNodeId
         ? nodes.find((n) => n.id === editNodeId) ?? null
         : null;
@@ -224,6 +346,8 @@ export default function FlowEditor() {
                 <button style={saveButton} onClick={handleSave}>Сохранить</button>
                 <button style={autoLayoutButton} onClick={handleAutoLayout}>Автораспределить</button>
                 <button style={uploadButton} onClick={handleOpenFileDialog}>Загрузить YAML</button>
+                <button style={autoLayoutButton} onClick={() => handleCollapseAll(false)}>Свернуть</button>
+                <button style={autoLayoutButton} onClick={() => handleCollapseAll(true)}>Развернуть</button>
                 <input
                     type="file"
                     accept=".yaml,.yml"
@@ -239,26 +363,41 @@ export default function FlowEditor() {
                     ))}
                 </select>
             </div>
+            <div
+                style={searchPanelContainer}
+            >
+                <SearchPanel
+                    inputRef={searchInputRef}
+                    searchString={searchString}
+                    setSearchString={setSearchString}
+                    foundNodeIds={foundNodeIds}
+                    foundIndex={foundIndex}
+                    setFoundIndex={setFoundIndex}
+                    nodes={nodes}
+                    reactFlowInstance={reactFlowInstance}
+                />
+            </div>
+
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 colorMode={'dark'}
-                onNodesChange={onNodesChange}
                 nodeTypes={nodeTypes}
                 fitView
                 connectOnClick={false}
                 elementsSelectable={false}
                 nodesDraggable={true}
                 nodesConnectable={false}
+                onNodesChange={onNodesChange}
+                onPaneClick={handlePaneClick}
+                onEdgeClick={handleEdgeClick}
             >
                 <Background />
                 <Controls />
                 <MiniMap
                     pannable={true}
                     zoomable={true}
-                    style={miniMapContainer}
-                    maskColor={'rgb(54,54,54)'}
-                    bgColor={'rgb(54,54,54)'}
+                    nodeColor={'rgba(35,141,255,0.7)'}
                     nodeBorderRadius={16}
                     maskStrokeColor={'#007BFF'}
                     maskStrokeWidth={2}
