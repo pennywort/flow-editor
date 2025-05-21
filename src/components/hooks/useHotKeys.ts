@@ -34,13 +34,13 @@ function isComboPressed(combo: string[], event: KeyboardEvent): boolean {
     if (event.metaKey) pressed.push("meta");
     if (event.altKey) pressed.push("alt");
     if (event.shiftKey) pressed.push("shift");
-    // key: если это модификатор — не учитываем, иначе добавляем как обычный (буква, цифра, f1 и т.д.)
+
     const k = event.key.toLowerCase();
     if (!["control", "ctrl", "meta", "command", "alt", "shift"].includes(k)) {
         pressed.push(normalizeKey(k));
     }
     pressed.sort();
-    // Сравниваем длину и наличие каждого элемента
+
     return combo.length === pressed.length && combo.every((k, i) => k === pressed[i]);
 }
 

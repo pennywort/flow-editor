@@ -1,13 +1,13 @@
-import React, {useCallback, useRef, useState, useMemo, useEffect} from 'react';
+import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import {
     ReactFlow,
     Background,
     Controls,
     MiniMap,
-    MarkerType,
     useNodesState,
     Node,
-    Edge, useReactFlow,
+    Edge,
+    useReactFlow,
 } from '@xyflow/react';
 import "@xyflow/react/dist/style.css";
 
@@ -17,114 +17,28 @@ import NodeEditor from "../NodeEditor/NodeEditor";
 import { yamlToNodes } from "../../utils/yamlToNodes";
 import { getLayoutedElements } from "../../utils/autoLayout";
 import ButtonNode from "../nodes/ButtonNode/ButtonNode";
-
 import {
-    panelContainer,
-    saveButton,
-    autoLayoutButton,
-    uploadButton,
-    select as selectStyle,
     rootContainer,
     searchPanelContainer,
 } from "./styles";
-import {SearchPanel} from "../SearchPanel/SearchPanel";
-import {useHotkeys} from "../hooks/useHotKeys";
+import { useHotkeys } from "../hooks/useHotKeys";
+import {useSearch} from "../../context/SearchContext";
+import {getEdgesFromNodes, getInitialNodes, saveNodesToStorage} from "./utils";
+import EditorControlsPanel from "../EditorControlsPanel/EditorControlsPanel";
+import SearchPanel from "../SearchPanel/SearchPanel";
 
-// export const nodeTypes = {
-//     textWithButtons: (props: any) => <ButtonNode {...props} />,
-// };
-
-const STORAGE_KEY = "flow_nodes_v1";
-
-function getInitialNodes(): Node<ButtonNodeData>[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-        try {
-            const nodes: Node<ButtonNodeData>[] = JSON.parse(raw);
-            const idToLabel: Record<string, string> = {};
-            nodes.forEach(n =>
-                (n.data.buttons ?? []).forEach(btn => {
-                    if (btn.target) idToLabel[btn.target] = btn.label;
-                })
-            );
-            return nodes.map(n => ({
-                ...n,
-                data: {
-                    ...n.data,
-                    label: n.id === '1'
-                        ? n.data.label
-                        : idToLabel[n.id] ?? n.data.label ?? "",
-                }
-            }));
-        } catch {}
-    }
-    return [
-        new ButtonNodeModel(
-            '1',
-            'Приветственное сообщение',
-            { x: 50, y: 50 },
-            `Ответ на ваш вопрос представлен на [Confluence](https://confluence.example.com)`,
-            [
-                { label: 'Действие 1', target: '2' },
-                { label: 'Действие 2', target: '3' },
-                { label: 'Внешняя ссылка', external: true },
-            ]
-        ),
-        new ButtonNodeModel('2', 'Действие 1', { x: 500, y: 30 }, `**Ответ по действию 1**`),
-        new ButtonNodeModel('3', 'Действие 2', { x: 500, y: 150 }, `**Ответ по действию 2**`),
-    ];
-}
-
-function saveNodesToStorage(nodes: Node<ButtonNodeData>[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
-}
-
-function getEdgesFromNodes(nodes: Node<ButtonNodeData>[], edgeType: string): Edge[] {
-    return nodes.flatMap((node) => {
-        const nodeButtons = (node.data as ButtonNodeData).buttons ?? [];
-        return nodeButtons.map((b: NodeButton, idx: number) => {
-            if (!b.target) return null;
-            return {
-                id: `e-${node.id}-btn-${idx}`,
-                source: node.id,
-                target: b.target!,
-                sourceHandle: `btn-${idx}`,
-                targetHandle: null,
-                type: edgeType,
-                markerEnd: {
-                    type: MarkerType.Arrow,
-                    width: 16,
-                    height: 16,
-                    color: '#007BFF',
-                },
-                style: {
-                    stroke: '#007BFF',
-                    strokeWidth: 2,
-                },
-            } as Edge;
-        }).filter(Boolean) as Edge[];
-    });
-}
-
-const EDGE_TYPE_OPTIONS = [
-    { value: "simplebezier", label: "Simple Bezier" },
-    { value: "default", label: "Default" },
-    { value: "step", label: "Step" },
-    { value: "smoothstep", label: "Smooth Step" },
-    { value: "straight", label: "Straight" },
-];
 
 export default function FlowEditor() {
     const searchInputRef = useRef<HTMLInputElement | null>(null);
-
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(getInitialNodes());
     const [editNodeId, setEditNodeId] = useState<string | null>(null);
-    const [edgeType, setEdgeType] = useState<string>("simplebezier");
+    const [edgeType] = useState<string>("simplebezier");
     const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
     const [currentDirection, setCurrentDirection] = useState<'target' | 'source' | null>('target');
-    const [searchString, setSearchString] = useState<string>('');
     const [foundNodeIds, setFoundNodeIds] = useState<string[]>([]);
     const [foundIndex, setFoundIndex] = useState<number>(0);
+
+    const { search } = useSearch();
 
     useHotkeys([
         {
@@ -145,12 +59,12 @@ export default function FlowEditor() {
     ]);
 
     useEffect(() => {
-        if (!searchString) {
+        if (!search) {
             setFoundNodeIds([]);
             setFoundIndex(0);
             return;
         }
-        const lower = searchString.toLowerCase();
+        const lower = search.toLowerCase();
         const ids = nodes
             .filter(n =>
                 (n.data.label && n.data.label.toLowerCase().includes(lower)) ||
@@ -159,7 +73,7 @@ export default function FlowEditor() {
             .map(n => n.id);
         setFoundNodeIds(ids);
         setFoundIndex(0);
-    }, [searchString, nodes]);
+    }, [search, nodes]);
 
     const reactFlowInstance = useReactFlow();
 
@@ -167,7 +81,7 @@ export default function FlowEditor() {
         ...edge,
         animated: selectedEdgeId === edge.id,
         style: selectedEdgeId === edge.id
-            ? { ...edge.style, strokeWidth: 3 }
+            ? { ...edge.style }
             : edge.style,
     })), [nodes, edgeType, selectedEdgeId]);
 
@@ -191,7 +105,7 @@ export default function FlowEditor() {
 
     const nodeTypes = useMemo(() => ({
         textWithButtons: (props: any) => {
-            return <ButtonNode {...props} onCollapse={handleCollapseNode}/>
+            return <ButtonNode {...props} onCollapse={handleCollapseNode}/>;
         },
     }), [handleCollapseNode]);
 
@@ -238,10 +152,6 @@ export default function FlowEditor() {
                 }
             }))
         );
-    };
-
-    const handleEdgeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setEdgeType(e.target.value);
     };
 
     const handleDeleteNode = useCallback((nodeId: string) => {
@@ -306,7 +216,6 @@ export default function FlowEditor() {
     const handleEdgeClick = useCallback(
         (event: React.MouseEvent, edge: Edge) => {
             event.stopPropagation();
-            console.log(edge)
             let nextDirection: 'target' | 'source' = 'target';
 
             if (selectedEdgeId === edge.id) {
@@ -316,7 +225,6 @@ export default function FlowEditor() {
             setSelectedEdgeId(edge.id);
             setCurrentDirection(nextDirection);
 
-            // Куда перемещать viewport
             const nodeId = nextDirection === 'target' ? edge.target : edge.source;
             const node = nodes.find(n => n.id === nodeId);
 
@@ -331,10 +239,15 @@ export default function FlowEditor() {
         [selectedEdgeId, currentDirection, nodes, reactFlowInstance]
     );
 
+    const handleNodesLoaded = useCallback((newNodes: Node<ButtonNodeData>[]) => {
+        setNodes(newNodes);
+        saveNodesToStorage(newNodes);
+    }, []);
+
     const handlePaneClick = useCallback(() => {
         setSelectedEdgeId(null);
         setCurrentDirection(null);
-    }, [])
+    }, []);
 
     const editingNode = editNodeId
         ? nodes.find((n) => n.id === editNodeId) ?? null
@@ -342,34 +255,17 @@ export default function FlowEditor() {
 
     return (
         <div style={rootContainer}>
-            <div style={panelContainer}>
-                <button style={saveButton} onClick={handleSave}>Сохранить</button>
-                <button style={autoLayoutButton} onClick={handleAutoLayout}>Автораспределить</button>
-                <button style={uploadButton} onClick={handleOpenFileDialog}>Загрузить YAML</button>
-                <button style={autoLayoutButton} onClick={() => handleCollapseAll(false)}>Свернуть</button>
-                <button style={autoLayoutButton} onClick={() => handleCollapseAll(true)}>Развернуть</button>
-                <input
-                    type="file"
-                    accept=".yaml,.yml"
-                    style={{ display: "none" }}
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                />
-                <select style={selectStyle} value={edgeType} onChange={handleEdgeTypeChange}>
-                    {EDGE_TYPE_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div
-                style={searchPanelContainer}
-            >
+            <EditorControlsPanel
+                onSave={handleSave}
+                onAutoLayout={handleAutoLayout}
+                onOpenFileDialog={handleOpenFileDialog}
+                onCollapseAll={handleCollapseAll}
+                fileInputRef={fileInputRef}
+                onNodesLoaded={handleNodesLoaded}
+            />
+            <div style={searchPanelContainer}>
                 <SearchPanel
                     inputRef={searchInputRef}
-                    searchString={searchString}
-                    setSearchString={setSearchString}
                     foundNodeIds={foundNodeIds}
                     foundIndex={foundIndex}
                     setFoundIndex={setFoundIndex}
@@ -377,7 +273,6 @@ export default function FlowEditor() {
                     reactFlowInstance={reactFlowInstance}
                 />
             </div>
-
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

@@ -31,6 +31,8 @@ export const baseNodeStyles: {
         fontSize: '13px',
         lineHeight: 1.18,
         maxHeight: '2.36em',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     labelContainer: {
         fontWeight: 'bold',

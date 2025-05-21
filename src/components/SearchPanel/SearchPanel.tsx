@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import { Node, ReactFlowInstance } from "@xyflow/react";
 import {
     searchPanelContainer,
@@ -7,10 +7,9 @@ import {
     navButtonActive,
     navButtonDisabled,
 } from "./styles";
+import {useSearch} from "../../context/SearchContext";
 
 type Props = {
-    searchString: string;
-    setSearchString: (v: string) => void;
     foundNodeIds: string[];
     foundIndex: number;
     setFoundIndex: (idx: number) => void;
@@ -19,9 +18,7 @@ type Props = {
     inputRef?: React.RefObject<HTMLInputElement | null>;
 };
 
-export const SearchPanel: React.FC<Props> = ({
-                                                 searchString,
-                                                 setSearchString,
+const SearchPanel: React.FC<Props> = ({
                                                  foundNodeIds,
                                                  foundIndex,
                                                  setFoundIndex,
@@ -29,6 +26,7 @@ export const SearchPanel: React.FC<Props> = ({
                                                  reactFlowInstance,
                                                  inputRef
                                              }) => {
+    const { search, setSearch } = useSearch();
 
     const centerToNode = (index: number) => {
         if (!foundNodeIds.length) return;
@@ -49,6 +47,7 @@ export const SearchPanel: React.FC<Props> = ({
         setFoundIndex(newIndex);
         centerToNode(newIndex);
     };
+
     const goNext = () => {
         if (!foundNodeIds.length) return;
         const newIndex = (foundIndex + 1) % foundNodeIds.length;
@@ -60,11 +59,11 @@ export const SearchPanel: React.FC<Props> = ({
         if (e.key === "Enter" && foundNodeIds.length > 0) {
             goNext();
         }
-        if (e.key === "ArrowLeft") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "ArrowLeft") {
             e.preventDefault();
             goPrev();
         }
-        if (e.key === "ArrowRight") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "ArrowRight") {
             e.preventDefault();
             goNext();
         }
@@ -76,10 +75,11 @@ export const SearchPanel: React.FC<Props> = ({
                 type="text"
                 placeholder="Поиск..."
                 ref={inputRef}
-                value={searchString}
-                onChange={e => setSearchString(e.target.value)}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 onKeyDown={onInputKeyDown}
                 style={searchInput}
+                aria-label="Поиск по нодам"
             />
             <span style={resultLabel}>
                 {foundNodeIds.length > 0 ? `${foundIndex + 1}/${foundNodeIds.length}` : "0/0"}
@@ -90,6 +90,7 @@ export const SearchPanel: React.FC<Props> = ({
                 title="Назад"
                 onClick={goPrev}
                 style={foundNodeIds.length < 2 ? navButtonDisabled : navButtonActive}
+                aria-label="Предыдущее совпадение"
             >←</button>
             <button
                 disabled={foundNodeIds.length < 2}
@@ -97,7 +98,10 @@ export const SearchPanel: React.FC<Props> = ({
                 title="Вперёд"
                 onClick={goNext}
                 style={foundNodeIds.length < 2 ? navButtonDisabled : navButtonActive}
+                aria-label="Следующее совпадение"
             >→</button>
         </div>
     );
 };
+
+export default memo(SearchPanel);
