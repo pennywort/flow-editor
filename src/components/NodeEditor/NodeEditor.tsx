@@ -1,17 +1,45 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Node } from "@xyflow/react";
+import { Button, SvgIcon } from "../shared";
 import { ButtonNodeData } from "../../models/ButtonNodeModel";
 import { NodeButton } from "../../models/BaseNodeModel";
+import { ReactComponent as DeleteSvg } from "../shared/svg/delete.svg";
+import { ReactComponent as CloseSvg } from "../shared/svg/close.svg";
+import { ReactComponent as PlusSvg } from "../shared/svg/plus.svg";
+import { ReactComponent as DragSvg } from "./icons/drag.svg";
+import * as styles from "./styles";
+import MarkdownEditor from "./MarkdownEditor";
+import {useDialog} from "../../context/DialogContext";
 
 type Props = {
     node: Node<ButtonNodeData>;
     onSave: (data: ButtonNodeData, newActions?: { idx: number, id: string, label: string }[]) => void;
     onClose: () => void;
+    onDeleteButton: (button: NodeButton) => void;
 };
 
-export default function NodeEditor({ node, onSave, onClose }: Props) {
+export default function NodeEditor(props: Props) {
+    const { onSave, onClose, onDeleteButton, node } = props;
     const [richText, setRichText] = useState(node.data.richText);
     const [buttons, setButtons] = useState<NodeButton[]>([...(node.data.buttons ?? [])]);
+
+    // --- root block fields ---
+    const isRoot = node.id === "menu";
+    const [backLabel, setBackLabel] = useState(node.data.back_label ?? "");
+    const [backToStartLabel, setBackToStartLabel] = useState(node.data.back_to_start_message_label ?? "");
+    const [deleteId, setDeleteId] = useState(node.data.delete_id ?? "");
+    const [deleteLabel, setDeleteLabel] = useState(node.data.delete_label ?? "");
+
+    useEffect(() => {
+        setRichText(node.data.richText);
+        setButtons([...(node.data.buttons ?? [])]);
+        setBackLabel(node.data.back_label ?? "");
+        setBackToStartLabel(node.data.back_to_start_message_label ?? "");
+        setDeleteId(node.data.delete_id ?? "");
+        setDeleteLabel(node.data.delete_label ?? "");
+    }, [node.id, node]);
+
+    const dialog = useDialog();
 
     const handleButtonChange = (idx: number, field: keyof NodeButton, value: any) => {
         setButtons((prev) =>
@@ -21,16 +49,30 @@ export default function NodeEditor({ node, onSave, onClose }: Props) {
         );
     };
 
-    const handleDeleteButton = (idx: number) => {
-        setButtons((prev) => prev.filter((_, i) => i !== idx));
+    const handleDeleteButton = async (idx: number) => {
+        const { result } = await dialog({
+            dialogId: "confirmRemoveActionInNode",
+            title: "Удаление",
+            content: "Все связи этой кнопки с блоками будут удалены. Вы уверены, что хотите продолжить?",
+            confirmLabel: "Удалить",
+            cancelLabel: "Отмена",
+            showCheckbox: true,
+            checkboxLabel: "Не спрашивать больше"
+        });
+
+        if (result) {
+            const btn = buttons[idx];
+            onDeleteButton?.(btn);
+            setButtons((prev) => prev.filter((_, i) => i !== idx));
+        }
     };
 
     const handleAddButton = () => {
-        setButtons((prev) => [...prev, { label: "Новое действие" }]);
+        setButtons((prev) => [...prev, { label: "Новое действие", id: 'button_' + buttons.length }]);
     };
 
     const handleAddLinkButton = () => {
-        setButtons((prev) => [...prev, { label: "Новая ссылка", external: true, href: "" }]);
+        setButtons((prev) => [...prev, { label: "Новая ссылка", external: true, id: 'link_button_' + buttons.length }]);
     };
 
     const handleSave = () => {
@@ -44,93 +86,178 @@ export default function NodeEditor({ node, onSave, onClose }: Props) {
             }
             return btn;
         });
-        onSave({ ...node.data, richText, buttons: updatedButtons }, newActions.length ? newActions : undefined);
+        let data: ButtonNodeData = { ...node.data, richText, buttons: updatedButtons };
+        if (isRoot) {
+            data = {
+                ...data,
+                back_label: backLabel,
+                back_to_start_message_label: backToStartLabel,
+                delete_id: deleteId,
+                delete_label: deleteLabel
+            };
+        }
+        onSave(data, newActions.length ? newActions : undefined);
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                top: 0,
-                right: 0,
-                width: 350,
-                height: "100vh",
-                background: "#232323",
-                color: "#fff",
-                zIndex: 99,
-                boxShadow: "-2px 0 8px #0007",
-                padding: 24,
-                overflowY: "auto",
-            }}
-        >
-            <button style={{ float: "right" }} onClick={onClose}>
-                ✖
-            </button>
-            <h3>Редактировать блок</h3>
-            <div style={{ marginBottom: 10 }}>
-                <label>Текст (Markdown):</label>
-                <textarea
-                    value={richText}
-                    onChange={(e) => setRichText(e.target.value)}
-                    style={{
-                        width: "100%",
-                        minHeight: 80,
-                        marginTop: 6,
-                        marginBottom: 6,
-                        resize: "vertical",
-                        color: "#fff",
-                        background: "#222",
-                        border: "1px solid #444",
-                        borderRadius: 6,
-                        padding: 8,
-                    }}
-                />
+        <div style={styles.editorContainer}>
+            <div style={styles.header}>
+                <div style={styles.headerTitle}>Редактирование</div>
+                <SvgIcon onClick={onClose} cursor={'pointer'}>
+                    <CloseSvg />
+                </SvgIcon>
             </div>
-            <div>
-                <b>Кнопки:</b>
-                {buttons.map((btn, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            marginBottom: 8,
-                            background: "#353535",
-                            borderRadius: 8,
-                            padding: 6,
-                        }}
-                    >
-                        <input
-                            value={btn.label}
-                            onChange={(e) => handleButtonChange(i, "label", e.target.value)}
-                            style={{ flex: 1, padding: 4, borderRadius: 4, border: "1px solid #666" }}
-                            placeholder={btn.external ? "Текст ссылки" : "Текст кнопки"}
-                        />
-                        <button onClick={() => handleDeleteButton(i)} style={{ color: "red" }}>
-                            ✖
-                        </button>
+            <div style={styles.content}>
+                {isRoot && (
+                    <div style={styles.rootFields}>
+                        <div style={styles.rootFieldsTitle}>Поля главного блока</div>
+                        <div style={styles.rootFieldRow}>
+                            <label style={styles.rootFieldLabel}>back_label:</label>
+                            <input
+                                style={styles.rootFieldInput}
+                                value={backLabel}
+                                onChange={e => setBackLabel(e.target.value)}
+                                placeholder={node.data.back_label || "back_label"}
+                            />
+                        </div>
+                        <div style={styles.rootFieldRow}>
+                            <label style={styles.rootFieldLabel}>back_to_start_message_label:</label>
+                            <input
+                                style={styles.rootFieldInput}
+                                value={backToStartLabel}
+                                onChange={e => setBackToStartLabel(e.target.value)}
+                                placeholder={node.data.back_to_start_message_label || "back_to_start_message_label"}
+                            />
+                        </div>
+                        <div style={styles.rootFieldRow}>
+                            <label style={styles.rootFieldLabel}>delete_id:</label>
+                            <input
+                                style={styles.rootFieldInput}
+                                value={deleteId}
+                                onChange={e => setDeleteId(e.target.value)}
+                                placeholder={node.data.delete_id || "delete_id"}
+                            />
+                        </div>
+                        <div style={styles.rootFieldRow}>
+                            <label style={styles.rootFieldLabel}>delete_label:</label>
+                            <input
+                                style={styles.rootFieldInput}
+                                value={deleteLabel}
+                                onChange={e => setDeleteLabel(e.target.value)}
+                                placeholder={node.data.delete_label || "delete_label"}
+                            />
+                        </div>
                     </div>
-                ))}
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button onClick={handleAddButton}>+ Добавить действие</button>
-                    <button onClick={handleAddLinkButton}>+ Добавить ссылку</button>
+                )}
+
+                <div style={styles.blockLabel}>Блок</div>
+                <div style={styles.blockTitle}>{node.data.label || "Без названия"}</div>
+                <div style={styles.textareaLabel}>Текст сообщения</div>
+                <MarkdownEditor
+                    value={richText}
+                    onChange={setRichText}
+                    maxLength={4096}
+                />
+
+                <div style={styles.actionsLabel}>Кнопки действия</div>
+                <div>
+                    <div style={styles.addButtons}>
+                        <Button
+                            size="small"
+                            variant="contained"
+                            color="#232324"
+                            startAdornment={<SvgIcon><PlusSvg /></SvgIcon>}
+                            onClick={handleAddButton}
+                        >
+                            Кнопка
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="contained"
+                            color="#232324"
+                            startAdornment={<SvgIcon><PlusSvg /></SvgIcon>}
+                            onClick={handleAddLinkButton}
+                        >
+                            Кнопка-Link
+                        </Button>
+                    </div>
+                    <div style={styles.actionsList}>
+                        {buttons.map((each, idx) => (
+                            <div
+                                key={each.id || idx}
+                                style={{
+                                    ...styles.actionRow,
+                                    ...(each.external
+                                        ? { background: "#232344", color: "#60b8f2" }
+                                        : {}),
+                                }}
+                            >
+                                <span style={styles.dragHandle}>
+                                    <SvgIcon>
+                                        <DragSvg />
+                                    </SvgIcon>
+                                </span>
+                                <input
+                                    value={each.label}
+                                    style={{
+                                        ...styles.actionInput,
+                                        ...(each.external
+                                            ? { fontStyle: "italic", color: "#60b8f2" }
+                                            : {}),
+                                    }}
+                                    maxLength={128}
+                                    onChange={e => {
+                                        let value = e.target.value;
+                                        if (value.length > 128) value = value.slice(0, 128);
+                                        handleButtonChange(idx, "label", value);
+                                    }}
+                                    placeholder={each.external ? "Markdown-ссылка" : "Текст кнопки"}
+                                />
+                                <span style={styles.actionCounter}>{each.label.length}/128</span>
+                                <span style={styles.actionWrapper}>
+                                    <SvgIcon
+                                        cursor="pointer"
+                                        onClick={() => handleDeleteButton(idx)}
+                                    >
+                                        <DeleteSvg />
+                                    </SvgIcon>
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
-            <div style={{ marginTop: 16 }}>
-                <button
+            <div style={styles.footer}>
+                <Button
+                    size="medium"
+                    variant="contained"
+                    color="#1877F2"
                     onClick={handleSave}
-                    style={{
-                        fontWeight: "bold",
-                        background: "#007BFF",
-                        color: "#fff",
-                        padding: "8px 16px",
-                        borderRadius: 6,
-                        marginTop: 12,
-                    }}
                 >
                     Сохранить
-                </button>
+                </Button>
+                <Button
+                    size="medium"
+                    variant="contained"
+                    color="#232324"
+                    onClick={onClose}
+                >
+                    Отмена
+                </Button>
+                <div style={styles.footerDelete}>
+                    <Button
+                        size="medium"
+                        disabled={isRoot}
+                        variant="contained"
+                        color="#DF5353"
+                        startAdornment={<SvgIcon><DeleteSvg /></SvgIcon>}
+                        onClick={() => {
+                            // Тут обработчик удаления блока, если потребуется
+                        }}
+                    >
+                        Удалить
+                    </Button>
+                </div>
             </div>
         </div>
     );

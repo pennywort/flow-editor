@@ -1,5 +1,4 @@
 import React, { memo, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import BaseNode from "../BaseNode/BaseNode";
 import { ButtonNodeData } from '../../../models/ButtonNodeModel';
@@ -10,6 +9,7 @@ import { stringCutOff } from "../../../utils";
 import ExternalButton from "./ExternalButton";
 import { useSearch } from "../../../context/SearchContext";
 import { highlightText } from "../../../utils/highlight";
+import {MarkdownRenderer} from "../../shared";
 
 export type ButtonNodeType = Node<ButtonNodeData>;
 export type ButtonNodeProps = NodeProps<ButtonNodeType> & {
@@ -29,18 +29,6 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
     const expanded = !!data.expanded;
     const { search } = useSearch();
 
-    // useEffect(() => {
-    //     if (
-    //         search &&
-    //         !expanded &&
-    //         data.richText &&
-    //         data.richText.toLowerCase().indexOf(search.toLowerCase()) > 127 &&
-    //         onCollapse
-    //     ) {
-    //         onCollapse(id, false);
-    //     }
-    // }, [search, data.richText, expanded, onCollapse, id]);
-
     const handleCollapse = useCallback(() => {
         onCollapse && onCollapse(id, expanded);
     }, [onCollapse, id, expanded]);
@@ -55,70 +43,7 @@ export const ButtonNode: React.FC<ButtonNodeProps> = ({
             onEdit={onEdit}
             {...rest}
         >
-            <ReactMarkdown
-                components={{
-                    a: ({ children, ...props }) => {
-                        const childText = Array.isArray(children)
-                            ? children.map((child, idx) =>
-                                typeof child === "string"
-                                    ? highlightText(child, search)
-                                    : child
-                            )
-                            : typeof children === "string"
-                                ? highlightText(children, search)
-                                : children;
-                        return (
-                            <a {...props}
-                               style={styles.externalLink}
-                               target="_blank"
-                               rel="noreferrer">{childText}</a>
-                        );
-                    },
-                    p: ({ children }) => (
-                        <p>
-                            {Array.isArray(children)
-                                ? children.map((child, idx) =>
-                                    typeof child === "string"
-                                        ? highlightText(child, search)
-                                        : child
-                                )
-                                : typeof children === "string"
-                                    ? highlightText(children, search)
-                                    : children}
-                        </p>
-                    ),
-
-                    h1: ({ children }) => (
-                        <h1>
-                            {Array.isArray(children)
-                                ? children.map((child, idx) =>
-                                    typeof child === "string"
-                                        ? highlightText(child, search)
-                                        : child
-                                )
-                                : typeof children === "string"
-                                    ? highlightText(children, search)
-                                    : children}
-                        </h1>
-                    ),
-                    h2: ({ children }) => (
-                        <h2>
-                            {Array.isArray(children)
-                                ? children.map((child, idx) =>
-                                    typeof child === "string"
-                                        ? highlightText(child, search)
-                                        : child
-                                )
-                                : typeof children === "string"
-                                    ? highlightText(children, search)
-                                    : children}
-                        </h2>
-                    ),
-                    text: ({ children }) => <>{highlightText(children as string, search)}</>
-                }}
-            >
-                {displayText}
-            </ReactMarkdown>
+            <MarkdownRenderer text={displayText} search={search} />
             {data.richText.length > 128 && (
                 <div style={styles.collapseIconRow}>
                     <CollapseIcon expanded={expanded} onClick={handleCollapse} />

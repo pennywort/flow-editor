@@ -1,16 +1,15 @@
 import React, {memo} from "react";
 import {
     panelContainer,
-    saveButton,
-    autoLayoutButton,
-    uploadButton,
 } from "./styles";
 import { Node } from "@xyflow/react";
 import { ButtonNodeData } from "../../models/ButtonNodeModel";
 import { yamlToNodes } from "../../utils/yamlToNodes";
+import { Button } from "../shared";
 
 type Props = {
     onSave: () => void;
+    onSaveToYaml?: () => void;
     onAutoLayout: () => void;
     onOpenFileDialog: () => void;
     onCollapseAll: (expanded: boolean) => void;
@@ -20,6 +19,7 @@ type Props = {
 
 const EditorControlsPanel: React.FC<Props> = ({
                                                   onSave,
+                                                  onSaveToYaml,
                                                   onAutoLayout,
                                                   onOpenFileDialog,
                                                   onCollapseAll,
@@ -46,11 +46,54 @@ const EditorControlsPanel: React.FC<Props> = ({
 
     return (
         <div style={panelContainer}>
-            <button style={saveButton} onClick={onSave}>Сохранить</button>
-            <button style={autoLayoutButton} onClick={onAutoLayout}>Автораспределить</button>
-            <button style={uploadButton} onClick={onOpenFileDialog}>Загрузить YAML</button>
-            <button style={autoLayoutButton} onClick={() => onCollapseAll(false)}>Свернуть</button>
-            <button style={autoLayoutButton} onClick={() => onCollapseAll(true)}>Развернуть</button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#007BFF"
+                onClick={onSave}
+            >
+                Сохранить
+            </Button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#1CB65D"
+                onClick={onAutoLayout}
+            >
+                Автораспределить
+            </Button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#9147FF"
+                onClick={onOpenFileDialog}
+            >
+                Загрузить YAML
+            </Button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#91370F"
+                onClick={onSaveToYaml}
+            >
+                Выгрузить YAML
+            </Button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#444"
+                onClick={() => onCollapseAll(false)}
+            >
+                Свернуть
+            </Button>
+            <Button
+                size="medium"
+                variant="contained"
+                color="#444"
+                onClick={() => onCollapseAll(true)}
+            >
+                Развернуть
+            </Button>
             <input
                 type="file"
                 accept=".yaml,.yml"
@@ -59,6 +102,7 @@ const EditorControlsPanel: React.FC<Props> = ({
                 onChange={handleFileChange}
             />
         </div>
+
     );
 };
 

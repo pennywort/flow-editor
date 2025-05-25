@@ -1,18 +1,18 @@
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import React, { CSSProperties, memo, type ReactNode } from 'react';
 import { baseNodeStyles } from './styles';
-import deleteIcon from './delete.svg';
-import editIcon from './edit.svg';
+import { ReactComponent as DeleteSvg } from "../../shared/svg/delete.svg";
+import {ReactComponent as EditSvg} from '../../shared/svg/edit.svg';
 import { useSearch } from "../../../context/SearchContext";
-import {highlightText} from "../../../utils/highlight";
+import { MarkdownRenderer, SvgIcon } from "../../shared";
 
 export type BaseNodeType = Node<{ label: string }>;
 export type BaseNodeProps = NodeProps<BaseNodeType> & {
     children?: ReactNode;
     text?: string;
     style?: { container: CSSProperties; label: CSSProperties };
-    onDelete?: () => void;
-    onEdit?: () => void;
+    onDelete?: (nodeId: string) => void;
+    onEdit?: (nodeId: string) => void;
 };
 
 const BaseNode = (props: BaseNodeProps) => {
@@ -23,6 +23,7 @@ const BaseNode = (props: BaseNodeProps) => {
         style,
         onDelete,
         onEdit,
+        id
     } = props;
 
     const { search } = useSearch();
@@ -37,31 +38,36 @@ const BaseNode = (props: BaseNodeProps) => {
         ...style?.label,
     };
 
+    const handleEdit = (nodeId: string) => {
+        onEdit && onEdit(nodeId);
+    }
+
+    const handleDelete = (nodeId: string) => {
+        if (nodeId === 'menu') { //TODO: сделать id изменяемым?
+            return;
+        }
+        onDelete && onDelete(nodeId);
+    }
+
     return (
         <div>
             <div style={mergedLabelStyles}>
-                <span style={baseNodeStyles.headerEllipsis}>
-                    {highlightText(data.label, search)}
-                </span>
+                <MarkdownRenderer text={data.label} search={search} />
                 <div style={{ flexShrink: 0, marginLeft: 8 }}>
-                    <img
-                        src={editIcon}
-                        alt=""
-                        onClick={onEdit}
-                        style={{ cursor: 'pointer', marginRight: 6 }}
-                    />
-                    <img
-                        src={deleteIcon}
-                        alt=""
-                        onClick={onDelete}
-                        style={{ cursor: 'pointer' }}
-                    />
+                    <SvgIcon onClick={() => handleEdit(id)} >
+                        <EditSvg />
+                    </SvgIcon>
+                    <SvgIcon onClick={() => handleDelete(id)}>
+                        <DeleteSvg />
+                    </SvgIcon>
                 </div>
             </div>
             <div style={mergedContainerStyles}>
                 <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
                 {text
-                    ? highlightText(text, search)
+                    ? (
+                        <MarkdownRenderer text={text} search={search} />
+                    )
                     : children}
             </div>
         </div>

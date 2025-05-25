@@ -6,29 +6,24 @@ delete_id: delete_simple_menu
 delete_label: Отмена
 child_messages:
   - main_category_1
-  - sec_button_1
-
 messages:
   - id: main_category_1
-    label: '🔐 Безопасность test tes testsetsetsetsetsetsetsetsetse dfdsfdsfg sdfg sdfg sdfg sdfgd sfgds fgsdf gsdfg'
+    label: 🔐 Безопасность test tes testsetsetsetsetsetsetsetsetse dfdsfdsfg sdfg
+      sdfg sdfg sdfgd sfgds fgsdf gsdfg
     text: "Выберите раздел безопасности:"
     child_messages:
       - sec_button_2
     parent_message: simple_menu
-
-  - id: sec_button_1
-    label: '[Ranger Доку sdkfj lsdkjf klsdjfl jsdlkfj lksdfjlk sdlkfj klsdjf lksjdfkl kljментация](https://example.com/ranger-docs)'
-    is_link_button: true
-    parent_message: simple_menu
-
   - id: sec_button_2
-    label: 'Журналирование'
+    label: Журналирование
     text: "Настройки журналирования и доступы:"
-    child_messages:
-      - logging_sub_1
     parent_message: main_category_1
-
-  - id: logging_sub_1
-    label: '[OpenSearch Dashboards](https://example.com/opensearch)'
+  - id: sec_button_1
+    label: "[Ranger Доку sdkfj lsdkjf klsdjfl jsdlkfj lksdfjlk sdlkfj klsdjf
+      lksjdfkl kljментация](https://example.com/ranger-docs)"
+    parent_message: simple_menu
     is_link_button: true
+  - id: logging_sub_1
+    label: "[OpenSearch Dashboards](https://example.com/opensearch)"
     parent_message: sec_button_2
+    is_link_button: true

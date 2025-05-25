@@ -28,18 +28,11 @@ export function getInitialNodes(): Node<ButtonNodeData>[] {
     }
     return [
         new ButtonNodeModel(
-            '1',
+            'menu', //TODO: сделать id изменяемым?
             'Приветственное сообщение',
             { x: 50, y: 50 },
-            `Ответ на ваш вопрос представлен на [Confluence](https://confluence.example.com)`,
-            [
-                { label: 'Действие 1', target: '2' },
-                { label: 'Действие 2', target: '3' },
-                { label: 'Внешняя ссылка', external: true },
-            ]
+            `Это первый блок. Вы можете его редактировать и добавлять кнопки.`,
         ),
-        new ButtonNodeModel('2', 'Действие 1', { x: 500, y: 30 }, `**Ответ по действию 1**`),
-        new ButtonNodeModel('3', 'Действие 2', { x: 500, y: 150 }, `**Ответ по действию 2**`),
     ];
 }
 

@@ -1,0 +1,14 @@
+<svg width="24.000000" height="24.000000" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<clipPath id="clip208_154726">
+			<rect id="italic" width="16.000000" height="16.000000" transform="translate(4.000000 4.000000)" fill="white" fill-opacity="0"/>
+		</clipPath>
+		<radialGradient gradientTransform="translate(12 12) rotate(90) scale(8 8)" cx="0.000000" cy="0.000000" r="1.000000" id="paint_angular_208_154735_0" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#FFFFFF" stop-opacity="0.000000"/>
+			<stop offset="1.000000" stop-color="#000000"/>
+		</radialGradient>
+	</defs>
+	<g clip-path="url(#clip208_154726)">
+		<path id="Shape" d="M14.0188 6L16.6667 6C17.0349 6 17.3334 6.29883 17.3334 6.66699C17.3334 7.03516 17.0349 7.33398 16.6667 7.33398L14.462 7.33398L10.962 16.667L13.3334 16.667C13.7017 16.667 14.0001 16.9658 14.0001 17.334C14.0001 17.7021 13.7017 18 13.3334 18L10.0135 18C10.0045 18 9.99548 18 9.98645 18L7.33337 18C6.96521 18 6.66675 17.7021 6.66675 17.334C6.66675 16.9658 6.96521 16.667 7.33337 16.667L9.53809 16.667L13.0381 7.33398L10.6667 7.33398C10.2986 7.33398 10.0001 7.03516 10.0001 6.66699C10.0001 6.29883 10.2986 6 10.6667 6L13.9816 6C13.9939 6 14.0063 6 14.0188 6Z" clip-rule="evenodd" fill="currentColor" fill-opacity="1.000000" fill-rule="evenodd"/>
+	</g>
+</svg>

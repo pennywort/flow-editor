@@ -14,7 +14,6 @@ import "@xyflow/react/dist/style.css";
 import { ButtonNodeModel, ButtonNodeData } from "../../models/ButtonNodeModel";
 import { NodeButton } from "../../models/BaseNodeModel";
 import NodeEditor from "../NodeEditor/NodeEditor";
-import { yamlToNodes } from "../../utils/yamlToNodes";
 import { getLayoutedElements } from "../../utils/autoLayout";
 import ButtonNode from "../nodes/ButtonNode/ButtonNode";
 import {
@@ -26,6 +25,8 @@ import {useSearch} from "../../context/SearchContext";
 import {getEdgesFromNodes, getInitialNodes, saveNodesToStorage} from "./utils";
 import EditorControlsPanel from "../EditorControlsPanel/EditorControlsPanel";
 import SearchPanel from "../SearchPanel/SearchPanel";
+import {nodesToYaml} from "../../utils/nodesToYaml";
+import {removeNodesRecursively} from "../../utils/removeNodesR";
 
 
 export default function FlowEditor() {
@@ -37,7 +38,6 @@ export default function FlowEditor() {
     const [currentDirection, setCurrentDirection] = useState<'target' | 'source' | null>('target');
     const [foundNodeIds, setFoundNodeIds] = useState<string[]>([]);
     const [foundIndex, setFoundIndex] = useState<number>(0);
-
     const { search } = useSearch();
 
     useHotkeys([
@@ -87,72 +87,10 @@ export default function FlowEditor() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleCollapseNode = useCallback((nodeId: string, expanded: boolean) => {
-        setNodes((nds) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            expanded: !expanded,
-                        },
-                    }
-                    : node
-            )
-        );
-    }, [setNodes]);
-
-    const nodeTypes = useMemo(() => ({
-        textWithButtons: (props: any) => {
-            return <ButtonNode {...props} onCollapse={handleCollapseNode}/>;
-        },
-    }), [handleCollapseNode]);
-
-    const handleOpenFileDialog = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const yamlText = ev.target?.result as string;
-                const newNodes = yamlToNodes(yamlText);
-                setNodes(newNodes);
-                saveNodesToStorage(newNodes);
-            } catch (err) {
-                alert('Ошибка разбора YAML');
-            }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
-    };
-
-    const handleAutoLayout = () => {
-        const newNodes = getLayoutedElements(nodes, edges, 'LR');
-        setNodes(newNodes);
-        saveNodesToStorage(newNodes);
-    };
-
-    const handleSave = () => {
-        saveNodesToStorage(nodes);
-    };
-
-    const handleCollapseAll = (expanded: boolean) => {
-        setNodes((nds) =>
-            nds.map((node) => ({
-                ...node,
-                data: {
-                    ...node.data,
-                    expanded: expanded,
-                }
-            }))
-        );
-    };
+    const handleEditNode = useCallback((nodeId: string) => {
+        console.log(nodeId)
+        setEditNodeId(nodeId);
+    }, []);
 
     const handleDeleteNode = useCallback((nodeId: string) => {
         setNodes((nds) => {
@@ -172,9 +110,62 @@ export default function FlowEditor() {
         setEditNodeId((id) => (id === nodeId ? null : id));
     }, [setNodes]);
 
-    const handleEditNode = useCallback((nodeId: string) => {
-        setEditNodeId(nodeId);
-    }, []);
+    const handleCollapseNode = useCallback((nodeId: string, expanded: boolean) => {
+        setNodes((nds) =>
+            nds.map((node) =>
+                node.id === nodeId
+                    ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            expanded: !expanded,
+                        },
+                    }
+                    : node
+            )
+        );
+    }, [setNodes]);
+
+    const nodeTypes = useMemo(() => ({
+        textWithButtons: (props: any) => {
+            return <ButtonNode {...props}
+                               onCollapse={handleCollapseNode}
+                               onDelete={handleDeleteNode}
+                               onEdit={handleEditNode}/>;
+        },
+    }), [handleCollapseNode, handleDeleteNode, handleEditNode]);
+
+    const handleOpenFileDialog = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAutoLayout = () => {
+        const newNodes = getLayoutedElements(nodes, edges, 'LR');
+        setNodes(newNodes);
+        saveNodesToStorage(newNodes);
+    };
+
+    const handleSave = () => {
+        saveNodesToStorage(nodes);
+    };
+
+    const handleSaveYaml = () => {
+        console.log('nodes', nodes)
+        // @ts-ignore
+        window.jopa = nodesToYaml(nodes);
+    };
+
+    const handleCollapseAll = (expanded: boolean) => {
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    expanded: expanded,
+                }
+            }))
+        );
+    };
 
     const handleSaveEdit = (
         nodeId: string,
@@ -211,6 +202,13 @@ export default function FlowEditor() {
             return newNodes;
         });
         setEditNodeId(null);
+    };
+
+    const handleDeleteButtonFromNode = (btn: NodeButton) => {
+        if (btn.target) {
+            console.log('btn.target', btn.target)
+            setNodes((nodes) => removeNodesRecursively(nodes, btn.target!));
+        }
     };
 
     const handleEdgeClick = useCallback(
@@ -257,6 +255,7 @@ export default function FlowEditor() {
         <div style={rootContainer}>
             <EditorControlsPanel
                 onSave={handleSave}
+                onSaveToYaml={handleSaveYaml}
                 onAutoLayout={handleAutoLayout}
                 onOpenFileDialog={handleOpenFileDialog}
                 onCollapseAll={handleCollapseAll}
@@ -301,8 +300,9 @@ export default function FlowEditor() {
             {editingNode && (
                 <NodeEditor
                     node={editingNode}
+                    onDeleteButton={handleDeleteButtonFromNode}
                     onClose={() => setEditNodeId(null)}
-                    onSave={(data, newActions) => handleSaveEdit(editingNode.id, data, newActions)}
+                    onSave={(data: any, newActions: any) => handleSaveEdit(editingNode.id, data, newActions)}
                 />
             )}
         </div>

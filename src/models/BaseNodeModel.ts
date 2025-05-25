@@ -2,6 +2,7 @@ import { Node } from '@xyflow/react';
 import React from "react";
 
 export interface NodeButton {
+    id: string;
     label: string;
     target?: string;
     external?: boolean;
@@ -11,6 +12,7 @@ export interface BaseNodeData extends Record<string, unknown> {
     label: string;
     parent_message?: string;
     back_label?: string;
+    back_to_start_message_label?: string;
     delete_id?: string;
     delete_label?: string;
 }
@@ -21,6 +23,10 @@ export class BaseNodeModel<T extends BaseNodeData = BaseNodeData> implements Nod
     position: { x: number; y: number };
     data: T;
     style: React.CSSProperties;
+
+    public get isRoot(): boolean {
+        return this.id === 'menu'; //TODO: сделать id изменяемым?
+    }
 
     constructor(config: {
         id: string;

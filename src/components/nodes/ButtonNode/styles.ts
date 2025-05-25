@@ -1,5 +1,7 @@
 import { CSSProperties } from 'react';
 
+export { labelEllipsis } from '../../shared/MarkdownRenderer/styles';
+
 export const buttonsContainer: CSSProperties = {
     marginTop: 12,
     display: 'flex',
@@ -7,14 +9,14 @@ export const buttonsContainer: CSSProperties = {
     gap: 6,
 };
 
-export const buttonWrapper: CSSProperties = {
-    position: 'relative',
-};
-
 export const externalLink: CSSProperties = {
     color: '#2196F3',
     textDecoration: 'none',
     fontWeight: 500,
+};
+
+export const buttonWrapper: CSSProperties = {
+    position: 'relative',
 };
 
 export const handle: CSSProperties = {
@@ -48,6 +50,7 @@ export const button: CSSProperties = {
 export const link: CSSProperties = {
     width: '100%',
     display: 'flex',
+    gap: 2,
     alignItems: 'center',
     background: '#333',
     color: '#fff',
@@ -60,15 +63,6 @@ export const link: CSSProperties = {
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     boxSizing: 'border-box',
-};
-
-export const labelEllipsis: CSSProperties = {
-    overflow: "hidden",
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    display: "block",
-    flex: "1 1 auto",
-    minWidth: 0,
 };
 
 export const collapseIconRow: CSSProperties = {

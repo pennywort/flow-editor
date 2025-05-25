@@ -1,6 +1,6 @@
 import {ButtonNodeModel} from "../../models/ButtonNodeModel";
-import {nodesToYaml} from "../nodesToYaml";
-import {yamlToNodes} from "../yamlToNodes";
+import {nodesToYaml} from "../yaml/nodesToYaml";
+import {yamlToNodes} from "../yaml/yamlToNodes";
 
 const nodes = [
     new ButtonNodeModel(

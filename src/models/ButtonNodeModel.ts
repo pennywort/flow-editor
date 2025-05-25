@@ -13,13 +13,14 @@ export class ButtonNodeModel extends BaseNodeModel<ButtonNodeData> {
         label: string,
         position: { x: number; y: number },
         content: string,
-        buttons: NodeButton[] = []
+        buttons: NodeButton[] = [],
+        extra?: Partial<Omit<ButtonNodeData, "label" | "richText" | "buttons">>
     ) {
         super({
             id,
             type: 'textWithButtons',
             position,
-            data: { label, richText: content, buttons },
+            data: { label, richText: content, buttons, ...(extra || {}) },
         });
     }
 }
