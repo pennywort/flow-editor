@@ -4,6 +4,7 @@ text: |-
   Если не нашлось ответа на интересующий вопрос, оставь обращение через СберДруг, мы обязательно его рассмотрим: 
   SberData - сервисы информационной безопасности: [вопросы и ошибки](https://sberfriend.ca.sbrf.ru/sberfriend/#/application/80505D908AA0477AA8E1359E0C1553A9)
 back_label: Назад
+back_to_start_message_label: Назад в главное меню
 delete_id: delete_menu
 delete_label: Отмена
 child_messages:
