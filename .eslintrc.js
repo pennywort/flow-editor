@@ -11,7 +11,10 @@ module.exports = {
         'plugin:import/typescript',
     ],
     'rules': {
+        'object-curly-spacing': ['error', 'always'],
         'indent': ['error', 'tab'],
+        'no-nested-ternary': 'error',
+        'no-mixed-spaces-and-tabs': 'error',
         'curly': ['error', 'all'],
         'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
         'import/order': ['error', {

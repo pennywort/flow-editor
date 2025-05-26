@@ -136,3 +136,136 @@ messages:
     text: ...
 "
 `;
+
+exports[`utils test конвертирует nodes в yaml (snapshot): nodes-to-yaml 1`] = `
+"id: menu
+text: Привет, я бот - навигатор по базе знаний \\"Сервисы ИБ Фабрики Данных\\".
+child_messages:
+  - first_category
+  - second_category
+messages:
+  - id: first_category
+    label: Категория 1
+    text: Текст категории 1
+    child_messages:
+      - first_button_1
+  - id: second_category
+    label: Категория 2
+    text: Текст категории 2
+  - id: first_button_1
+    label: Перейти в Категорию 2
+    text: ...
+  - id: link_test
+    label: Внешний ресурс
+    parent_message: second_category
+    is_link_button: true
+"
+`;
+
+exports[`utils test конвертирует yaml в nodes (snapshot): yaml-to-nodes 1`] = `
+Array [
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "id": "first_category",
+          "label": "Категория 1",
+          "target": "first_category",
+        },
+        Object {
+          "id": "second_category",
+          "label": "Категория 2",
+          "target": "second_category",
+        },
+      ],
+      "label": "",
+      "richText": "Привет, я бот - навигатор по базе знаний \\"Сервисы ИБ Фабрики Данных\\".",
+    },
+    "id": "menu",
+    "position": Object {
+      "x": 50,
+      "y": 50,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "id": "first_button_1",
+          "label": "Перейти в Категорию 2",
+          "target": "first_button_1",
+        },
+      ],
+      "label": "Категория 1",
+      "richText": "Текст категории 1",
+    },
+    "id": "first_category",
+    "position": Object {
+      "x": 300,
+      "y": 50,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [
+        Object {
+          "external": true,
+          "id": "link_test",
+          "label": "Внешний ресурс",
+        },
+      ],
+      "label": "Категория 2",
+      "richText": "Текст категории 2",
+    },
+    "id": "second_category",
+    "position": Object {
+      "x": 340,
+      "y": 150,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+  ButtonNodeModel {
+    "data": Object {
+      "buttons": Array [],
+      "label": "Перейти в Категорию 2",
+      "richText": "...",
+    },
+    "id": "first_button_1",
+    "position": Object {
+      "x": 380,
+      "y": 250,
+    },
+    "style": Object {
+      "backgroundColor": "rgb(0, 0, 0)",
+      "borderRadius": 8,
+      "color": "#fff",
+      "paddingLeft": "3px",
+      "width": 280,
+    },
+    "type": "textWithButtons",
+  },
+]
+`;

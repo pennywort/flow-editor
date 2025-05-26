@@ -1,4 +1,4 @@
-import React, {CSSProperties, DOMAttributes, memo} from "react";
+import React, { CSSProperties, DOMAttributes, memo } from 'react';
 
 type SvgIconProps = {
     size?: number | string;
@@ -9,21 +9,21 @@ type SvgIconProps = {
 } & DOMAttributes<HTMLOrSVGElement>;
 
 const SvgIcon: React.FC<SvgIconProps> = ({ children, size = 'unset', color, style, className, cursor, ...rest }) => (
-    <span
-        {...rest}
-        className={className}
-        style={{
-            display: "inline-flex",
-            verticalAlign: "middle",
-            color,
-            width: size,
-            height: size,
-            cursor,
-            ...style,
-        }}
-    >
-      {children}
-    </span>
+	<span
+		{...rest}
+		className={className}
+		style={{
+			display: 'inline-flex',
+			verticalAlign: 'middle',
+			color,
+			width: size,
+			height: size,
+			cursor,
+			...style,
+		}}
+	>
+		{children}
+	</span>
 )
 
 export default memo(SvgIcon);

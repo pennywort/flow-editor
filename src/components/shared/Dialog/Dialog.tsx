@@ -1,6 +1,8 @@
-import React from "react";
-import * as styles from "./styles";
-import Button from "../Button/Button";
+import React from 'react';
+
+import Button from '../Button/Button';
+
+import * as styles from './styles';
 
 interface DialogProps {
     open: boolean;
@@ -17,56 +19,58 @@ interface DialogProps {
 }
 
 const Dialog: React.FC<DialogProps> = ({
-                                           open,
-                                           title,
-                                           children,
-                                           confirmLabel = "OK",
-                                           cancelLabel = "Cancel",
-                                           onConfirm,
-                                           onCancel,
-                                           showCheckbox,
-                                           checkboxLabel,
-                                           checkboxChecked,
-                                           onCheckboxChange,
-                                       }) => {
-    if (!open) return null;
-    return (
-        <div style={styles.overlay}>
-            <div style={styles.dialog}>
-                {title && <div style={styles.title}>{title}</div>}
-                <div style={styles.content}>{children}</div>
-                {showCheckbox && (
-                    <label style={styles.checkboxLabel}>
-                        <input
-                            type="checkbox"
-                            checked={checkboxChecked}
-                            onChange={e => onCheckboxChange?.(e.target.checked)}
-                            style={styles.checkbox}
-                        />
-                        {checkboxLabel}
-                    </label>
-                )}
-                <div style={styles.actions}>
-                    <Button
-                        size="small"
-                        variant="contained"
-                        color="#232324"
-                        onClick={onCancel}
-                    >
-                        {cancelLabel}
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="contained"
-                        color="#1877F2"
-                        onClick={onConfirm}
-                    >
-                        {confirmLabel}
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
+	open,
+	title,
+	children,
+	confirmLabel = 'OK',
+	cancelLabel = 'Cancel',
+	onConfirm,
+	onCancel,
+	showCheckbox,
+	checkboxLabel,
+	checkboxChecked,
+	onCheckboxChange,
+}) => {
+	if (!open) {
+		return null;
+	}
+	return (
+		<div style={styles.overlay}>
+			<div style={styles.dialog}>
+				{title && <div style={styles.title}>{title}</div>}
+				<div style={styles.content}>{children}</div>
+				{showCheckbox && (
+					<label style={styles.checkboxLabel}>
+						<input
+							type="checkbox"
+							checked={checkboxChecked}
+							onChange={e => onCheckboxChange?.(e.target.checked)}
+							style={styles.checkbox}
+						/>
+						{checkboxLabel}
+					</label>
+				)}
+				<div style={styles.actions}>
+					<Button
+						size="small"
+						variant="contained"
+						color="#232324"
+						onClick={onCancel}
+					>
+						{cancelLabel}
+					</Button>
+					<Button
+						size="small"
+						variant="contained"
+						color="#1877F2"
+						onClick={onConfirm}
+					>
+						{confirmLabel}
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 export default Dialog;
