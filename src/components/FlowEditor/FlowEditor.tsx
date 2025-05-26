@@ -2,7 +2,6 @@ import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
 import {
     ReactFlow,
     Background,
-    Controls,
     MiniMap,
     useNodesState,
     Node,
@@ -10,35 +9,36 @@ import {
     useReactFlow,
 } from '@xyflow/react';
 import "@xyflow/react/dist/style.css";
-
 import { ButtonNodeModel, ButtonNodeData } from "../../models/ButtonNodeModel";
 import { NodeButton } from "../../models/BaseNodeModel";
 import NodeEditor from "../NodeEditor/NodeEditor";
 import { getLayoutedElements } from "../../utils/autoLayout";
 import ButtonNode from "../nodes/ButtonNode/ButtonNode";
-import {
-    rootContainer,
-    searchPanelContainer,
-} from "./styles";
+import { rootContainer, searchPanelContainer } from "./styles";
 import { useHotkeys } from "../hooks/useHotKeys";
-import {useSearch} from "../../context/SearchContext";
-import {getEdgesFromNodes, getInitialNodes, saveNodesToStorage} from "./utils";
+import { useSearch } from "../../context/SearchContext";
+import { getEdgesFromNodes, getInitialNodes, saveNodesToStorage } from "./utils";
 import EditorControlsPanel from "../EditorControlsPanel/EditorControlsPanel";
 import SearchPanel from "../SearchPanel/SearchPanel";
-import {nodesToYaml} from "../../utils/nodesToYaml";
-import {removeOrphanNodes} from "../../utils/removeOrphanNodes";
-
+import { nodesToYaml } from "../../utils/nodesToYaml";
+import { removeOrphanNodes } from "../../utils/removeOrphanNodes";
+import UndoRedoPanel from "../UndoRedoPanel/UndoRedoPanel";
+import {useUndoManager} from "../hooks/useUndoManager";
+import {FlowControls} from "./FlowControls";
 
 export default function FlowEditor() {
     const searchInputRef = useRef<HTMLInputElement | null>(null);
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(getInitialNodes());
     const [editNodeId, setEditNodeId] = useState<string | null>(null);
+    const [allExpanded, setAllExpanded] = useState<boolean>(false);
     const [edgeType] = useState<string>("simplebezier");
     const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
     const [currentDirection, setCurrentDirection] = useState<'target' | 'source' | null>('target');
     const [foundNodeIds, setFoundNodeIds] = useState<string[]>([]);
     const [foundIndex, setFoundIndex] = useState<number>(0);
     const { search } = useSearch();
+
+    const undoManager = useUndoManager(nodes);
 
     useHotkeys([
         {
@@ -48,12 +48,12 @@ export default function FlowEditor() {
         },
         {
             keys: "ctrl+z|meta+z|command+z",
-            callback: () => null,
+            callback: () => undoManager.undo(setNodes),
             preventDefault: true,
         },
         {
             keys: "ctrl+shift+z|meta+shift+z|command+shift+z",
-            callback: () => null,
+            callback: () => undoManager.redo(setNodes),
             preventDefault: true,
         },
     ]);
@@ -88,14 +88,12 @@ export default function FlowEditor() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleEditNode = useCallback((nodeId: string) => {
-        console.log(nodeId)
         setEditNodeId(nodeId);
     }, []);
 
     const handleDeleteNode = useCallback((nodeId: string) => {
-        setNodes((nds) => {
+        undoManager.withUndo((nds) => {
             let filteredNodes = nds.filter((n) => n.id !== nodeId);
-
             filteredNodes = filteredNodes.map((n) => {
                 const oldButtons = (n.data as ButtonNodeData).buttons ?? [];
                 const buttons = oldButtons.filter((btn: NodeButton) => btn.target !== nodeId);
@@ -107,12 +105,10 @@ export default function FlowEditor() {
                     }
                 };
             });
-
-            //TODO: сделать id изменяемым?
             return removeOrphanNodes(filteredNodes, "menu");
-        });
+        }, setNodes, nodes);
         setEditNodeId((id) => (id === nodeId ? null : id));
-    }, [setNodes]);
+    }, [undoManager, setNodes, nodes]);
 
     const handleCollapseNode = useCallback((nodeId: string, expanded: boolean) => {
         setNodes((nds) =>
@@ -144,9 +140,11 @@ export default function FlowEditor() {
     };
 
     const handleAutoLayout = () => {
-        const newNodes = getLayoutedElements(nodes, edges, 'LR');
-        setNodes(newNodes);
-        saveNodesToStorage(newNodes);
+        undoManager.withUndo(
+            nodes => getLayoutedElements(nodes, edges, 'LR'),
+            setNodes, nodes
+        );
+        saveNodesToStorage(nodes);
     };
 
     const handleSave = () => {
@@ -154,7 +152,6 @@ export default function FlowEditor() {
     };
 
     const handleSaveYaml = () => {
-        console.log('nodes', nodes)
         // @ts-ignore
         window.jopa = nodesToYaml(nodes);
     };
@@ -169,6 +166,7 @@ export default function FlowEditor() {
                 }
             }))
         );
+        setAllExpanded(expanded);
     };
 
     const handleSaveEdit = (
@@ -176,7 +174,7 @@ export default function FlowEditor() {
         data: ButtonNodeData,
         newActions?: { idx: number, id: string, label: string }[]
     ) => {
-        setNodes((nds) => {
+        undoManager.withUndo((nds) => {
             let newNodes = nds.map((n) =>
                 n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n
             );
@@ -207,7 +205,7 @@ export default function FlowEditor() {
             newNodes = removeOrphanNodes(newNodes);
 
             return newNodes;
-        });
+        }, setNodes, nodes);
         setEditNodeId(null);
     };
 
@@ -258,7 +256,6 @@ export default function FlowEditor() {
                 onSaveToYaml={handleSaveYaml}
                 onAutoLayout={handleAutoLayout}
                 onOpenFileDialog={handleOpenFileDialog}
-                onCollapseAll={handleCollapseAll}
                 fileInputRef={fileInputRef}
                 onNodesLoaded={handleNodesLoaded}
             />
@@ -287,7 +284,10 @@ export default function FlowEditor() {
                 onEdgeClick={handleEdgeClick}
             >
                 <Background />
-                <Controls />
+                <FlowControls
+                    onToggleCollapse={() => handleCollapseAll(!allExpanded)}
+                    collapsed={allExpanded}
+                />
                 <MiniMap
                     pannable={true}
                     zoomable={true}
@@ -297,6 +297,12 @@ export default function FlowEditor() {
                     maskStrokeWidth={2}
                 />
             </ReactFlow>
+            <UndoRedoPanel
+                onUndo={() => undoManager.undo(setNodes)}
+                onRedo={() => undoManager.redo(setNodes)}
+                canUndo={undoManager.canUndo()}
+                canRedo={undoManager.canRedo()}
+            />
             {editingNode && (
                 <NodeEditor
                     node={editingNode}

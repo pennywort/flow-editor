@@ -12,7 +12,6 @@ type Props = {
     onSaveToYaml?: () => void;
     onAutoLayout: () => void;
     onOpenFileDialog: () => void;
-    onCollapseAll: (expanded: boolean) => void;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     onNodesLoaded: (nodes: Node<ButtonNodeData>[]) => void;
 };
@@ -22,7 +21,6 @@ const EditorControlsPanel: React.FC<Props> = ({
                                                   onSaveToYaml,
                                                   onAutoLayout,
                                                   onOpenFileDialog,
-                                                  onCollapseAll,
                                                   fileInputRef,
                                                   onNodesLoaded,
                                               }) => {
@@ -77,22 +75,6 @@ const EditorControlsPanel: React.FC<Props> = ({
                 onClick={onSaveToYaml}
             >
                 Выгрузить YAML
-            </Button>
-            <Button
-                size="medium"
-                variant="contained"
-                color="#444"
-                onClick={() => onCollapseAll(false)}
-            >
-                Свернуть
-            </Button>
-            <Button
-                size="medium"
-                variant="contained"
-                color="#444"
-                onClick={() => onCollapseAll(true)}
-            >
-                Развернуть
             </Button>
             <input
                 type="file"
