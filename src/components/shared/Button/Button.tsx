@@ -16,6 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
     style?: CSSProperties;
     className?: string;
+    disabled?: boolean;
 }
 
 function shadeColor(color: string, percent: number) {
@@ -60,13 +61,12 @@ function expandHex(hex: string): string {
     return hex;
 }
 
-
-
 function getButtonStyle(
     size: ButtonSize,
     color: string,
     variant: ButtonVariant,
-    userStyle?: CSSProperties
+    userStyle?: CSSProperties,
+    disabled?: boolean
 ) {
     const isContained = variant === "contained";
     const mainColor = color;
@@ -77,21 +77,25 @@ function getButtonStyle(
         ...SIZE_MAP[size],
         background: bgColor,
         color: textColor,
+        opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? "none" : "auto",
+        cursor: disabled ? "not-allowed" : "pointer",
         ...userStyle,
     } as CSSProperties;
 }
 
 const Button: React.FC<ButtonProps> = ({
-                                                  children,
-                                                  startAdornment,
-                                                  endAdornment,
-                                                  size = "medium",
-                                                  color = "#007BFF",
-                                                  variant = "contained",
-                                                  style,
-                                                  className,
-                                                  ...rest
-                                              }) => {
+                                           children,
+                                           startAdornment,
+                                           endAdornment,
+                                           size = "medium",
+                                           color = "#007BFF",
+                                           variant = "contained",
+                                           style,
+                                           className,
+                                           disabled = false,
+                                           ...rest
+                                       }) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const isContained = variant === "contained";
@@ -105,21 +109,21 @@ const Button: React.FC<ButtonProps> = ({
         : "rgba(0,0,0,0.11)";
 
     const finalStyle = useMemo(
-        () => getButtonStyle(size, color, variant, style),
-        [size, color, variant, style]
+        () => getButtonStyle(size, color, variant, style, disabled),
+        [size, color, variant, style, disabled]
     );
 
     const handleMouseEnter = () => {
-        if (buttonRef.current) buttonRef.current.style.background = hoverBg;
+        if (!disabled && buttonRef.current) buttonRef.current.style.background = hoverBg;
     };
     const handleMouseLeave = () => {
-        if (buttonRef.current) buttonRef.current.style.background = bgColor;
+        if (!disabled && buttonRef.current) buttonRef.current.style.background = bgColor;
     };
     const handleMouseDown = () => {
-        if (buttonRef.current) buttonRef.current.style.background = activeBg;
+        if (!disabled && buttonRef.current) buttonRef.current.style.background = activeBg;
     };
     const handleMouseUp = () => {
-        if (buttonRef.current) buttonRef.current.style.background = hoverBg;
+        if (!disabled && buttonRef.current) buttonRef.current.style.background = hoverBg;
     };
 
     return (
@@ -128,6 +132,7 @@ const Button: React.FC<ButtonProps> = ({
             className={className}
             style={finalStyle}
             {...rest}
+            disabled={disabled}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onMouseDown={handleMouseDown}
@@ -135,13 +140,13 @@ const Button: React.FC<ButtonProps> = ({
         >
             {startAdornment && (
                 <span style={flexCenter}>
-                  {startAdornment}
+                    {startAdornment}
                 </span>
             )}
             {children}
             {endAdornment && (
                 <span style={flexCenter}>
-                  {endAdornment}
+                    {endAdornment}
                 </span>
             )}
         </button>

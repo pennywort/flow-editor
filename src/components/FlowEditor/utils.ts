@@ -19,7 +19,7 @@ export function getInitialNodes(): Node<ButtonNodeData>[] {
                 ...n,
                 data: {
                     ...n.data,
-                    label: n.id === '1'
+                    label: n.id === 'menu' //TODO: сделать id изменяемым?
                         ? n.data.label
                         : idToLabel[n.id] ?? n.data.label ?? "",
                 }

@@ -15,11 +15,11 @@ type Props = {
     node: Node<ButtonNodeData>;
     onSave: (data: ButtonNodeData, newActions?: { idx: number, id: string, label: string }[]) => void;
     onClose: () => void;
-    onDeleteButton: (button: NodeButton) => void;
+    onDeleteNode: (nodeId: string) => void;
 };
 
 export default function NodeEditor(props: Props) {
-    const { onSave, onClose, onDeleteButton, node } = props;
+    const { onSave, onClose, onDeleteNode, node } = props;
     const [richText, setRichText] = useState(node.data.richText);
     const [buttons, setButtons] = useState<NodeButton[]>([...(node.data.buttons ?? [])]);
 
@@ -61,11 +61,15 @@ export default function NodeEditor(props: Props) {
         });
 
         if (result) {
-            const btn = buttons[idx];
-            onDeleteButton?.(btn);
             setButtons((prev) => prev.filter((_, i) => i !== idx));
         }
     };
+
+    const handleDeleteNode = async () => {
+        if (!isRoot) {
+           onDeleteNode && onDeleteNode(node.id);
+        }
+    }
 
     const handleAddButton = () => {
         setButtons((prev) => [...prev, { label: "Новое действие", id: 'button_' + buttons.length }]);
@@ -184,7 +188,7 @@ export default function NodeEditor(props: Props) {
                     <div style={styles.actionsList}>
                         {buttons.map((each, idx) => (
                             <div
-                                key={each.id || idx}
+                                key={`${each.target}_${idx}`}
                                 style={{
                                     ...styles.actionRow,
                                     ...(each.external
@@ -251,9 +255,7 @@ export default function NodeEditor(props: Props) {
                         variant="contained"
                         color="#DF5353"
                         startAdornment={<SvgIcon><DeleteSvg /></SvgIcon>}
-                        onClick={() => {
-                            // Тут обработчик удаления блока, если потребуется
-                        }}
+                        onClick={handleDeleteNode}
                     >
                         Удалить
                     </Button>

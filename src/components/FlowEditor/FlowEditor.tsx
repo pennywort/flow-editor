@@ -26,7 +26,7 @@ import {getEdgesFromNodes, getInitialNodes, saveNodesToStorage} from "./utils";
 import EditorControlsPanel from "../EditorControlsPanel/EditorControlsPanel";
 import SearchPanel from "../SearchPanel/SearchPanel";
 import {nodesToYaml} from "../../utils/nodesToYaml";
-import {removeNodesRecursively} from "../../utils/removeNodesR";
+import {removeOrphanNodes} from "../../utils/removeOrphanNodes";
 
 
 export default function FlowEditor() {
@@ -94,8 +94,9 @@ export default function FlowEditor() {
 
     const handleDeleteNode = useCallback((nodeId: string) => {
         setNodes((nds) => {
-            const filteredNodes = nds.filter((n) => n.id !== nodeId);
-            return filteredNodes.map((n) => {
+            let filteredNodes = nds.filter((n) => n.id !== nodeId);
+
+            filteredNodes = filteredNodes.map((n) => {
                 const oldButtons = (n.data as ButtonNodeData).buttons ?? [];
                 const buttons = oldButtons.filter((btn: NodeButton) => btn.target !== nodeId);
                 return {
@@ -106,6 +107,9 @@ export default function FlowEditor() {
                     }
                 };
             });
+
+            //TODO: сделать id изменяемым?
+            return removeOrphanNodes(filteredNodes, "menu");
         });
         setEditNodeId((id) => (id === nodeId ? null : id));
     }, [setNodes]);
@@ -199,16 +203,12 @@ export default function FlowEditor() {
                 });
                 newNodes = newNodes.concat(created);
             }
+
+            newNodes = removeOrphanNodes(newNodes);
+
             return newNodes;
         });
         setEditNodeId(null);
-    };
-
-    const handleDeleteButtonFromNode = (btn: NodeButton) => {
-        if (btn.target) {
-            console.log('btn.target', btn.target)
-            setNodes((nodes) => removeNodesRecursively(nodes, btn.target!));
-        }
     };
 
     const handleEdgeClick = useCallback(
@@ -300,8 +300,8 @@ export default function FlowEditor() {
             {editingNode && (
                 <NodeEditor
                     node={editingNode}
-                    onDeleteButton={handleDeleteButtonFromNode}
                     onClose={() => setEditNodeId(null)}
+                    onDeleteNode={handleDeleteNode}
                     onSave={(data: any, newActions: any) => handleSaveEdit(editingNode.id, data, newActions)}
                 />
             )}
