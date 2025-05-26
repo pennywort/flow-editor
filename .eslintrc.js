@@ -15,6 +15,7 @@ module.exports = {
         'indent': ['error', 'tab'],
         'no-nested-ternary': 'error',
         'no-mixed-spaces-and-tabs': 'error',
+        '@typescript-eslint/no-explicit-any': 'off',
         'curly': ['error', 'all'],
         'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
         'import/order': ['error', {
