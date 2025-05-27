@@ -166,7 +166,7 @@ export default function FlowEditor({ onSave, onError, initialYaml }: Props) {
 		);
 		saveNodesToStorage(nodes);
 		reactFlowInstance.fitView();
-	}, []);
+	}, [nodes]);
 	
 	const handleSave = () => {
 		try {
