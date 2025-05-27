@@ -264,6 +264,8 @@ export default function FlowEditor({ onSave, onError, initialYaml }: Props) {
 		const nodes = getLayoutedElements(newNodes, getEdgesFromNodes(newNodes, edgeType), 'LR')
 		setNodes(nodes);
 		saveNodesToStorage(nodes);
+		setEditNodeId(null);
+		setSelectedEdgeId(null);
 		const rootNode = nodes[0];
 		reactFlowInstance.setCenter(
 			rootNode.position.x + (rootNode.measured?.width || 180) / 2,
