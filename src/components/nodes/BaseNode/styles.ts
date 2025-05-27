@@ -38,7 +38,7 @@ export const baseNodeStyles: {
 		fontWeight: 'bold',
 		fontSize: 'smaller',
 		marginLeft: -3, //compensate arrow connection
-		padding: '10px 8px 10px 16px',
+		padding: '8px 8px 8px 16px',
 		borderBottom: '1px solid #333',
 		display: 'flex',
 		alignItems: 'center',

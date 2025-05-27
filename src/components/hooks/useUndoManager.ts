@@ -12,11 +12,12 @@ export function useUndoManager(initial: Node<ButtonNodeData>[]) {
 		(
 			updater: (prev: Node<ButtonNodeData>[]) => Node<ButtonNodeData>[],
 			setNodes: (nodes: Node<ButtonNodeData>[]) => void,
-			nodes: Node<ButtonNodeData>[]
+			nodes?: Node<ButtonNodeData>[]
 		) => {
-			undoStack.current.push(nodes.map(n => ({ ...n, data: { ...n.data } })));
+			const prevNodes = nodes ?? lastNodes.current;
+			undoStack.current.push(prevNodes.map(n => ({ ...n, data: { ...n.data } })));
 			redoStack.current.length = 0;
-			const updated = updater(nodes);
+			const updated = updater(prevNodes);
 			lastNodes.current = updated;
 			setNodes(updated);
 		},

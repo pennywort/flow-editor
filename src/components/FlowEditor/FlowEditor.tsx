@@ -23,14 +23,25 @@ import { nodesToYaml } from '../../utils/nodesToYaml';
 import { removeOrphanNodes } from '../../utils/removeOrphanNodes';
 import UndoRedoPanel from '../UndoRedoPanel/UndoRedoPanel';
 import { useUndoManager } from '../hooks/useUndoManager';
+import { yamlToNodes } from '../../utils/yamlToNodes';
 
 import { getEdgesFromNodes, getInitialNodes, saveNodesToStorage } from './utils';
 import { rootContainer, searchPanelContainer } from './styles';
 import { FlowControls } from './FlowControls';
 
-export default function FlowEditor() {
+type Props = {
+	initialYaml?: string;
+	onSave?: (yamlString: string) => void;
+	onError?: (err: Error) => void;
+};
+
+export default function FlowEditor({ onSave, onError, initialYaml }: Props) {
 	const searchInputRef = useRef<HTMLInputElement | null>(null);
-	const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(getInitialNodes());
+	const initialNodes = useMemo(
+		() => initialYaml ? yamlToNodes(initialYaml) : getInitialNodes(),
+		[]
+	);
+	const [nodes, setNodes, onNodesChange] = useNodesState<Node<ButtonNodeData>>(initialNodes);
 	const [editNodeId, setEditNodeId] = useState<string | null>(null);
 	const [allExpanded, setAllExpanded] = useState<boolean>(false);
 	const [edgeType] = useState<string>('simplebezier');
@@ -41,6 +52,10 @@ export default function FlowEditor() {
 	const { search } = useSearch();
 
 	const undoManager = useUndoManager(nodes);
+	
+	useEffect(() => {
+		setNodes(nds => getLayoutedElements(nds, getEdgesFromNodes(nds, edgeType), 'LR'));
+	}, []);
 
 	useHotkeys([
 		{
@@ -92,25 +107,28 @@ export default function FlowEditor() {
 	const handleEditNode = useCallback((nodeId: string) => {
 		setEditNodeId(nodeId);
 	}, []);
-
+	
 	const handleDeleteNode = useCallback((nodeId: string) => {
-		undoManager.withUndo((nds) => {
-			let filteredNodes = nds.filter((n) => n.id !== nodeId);
-			filteredNodes = filteredNodes.map((n) => {
-				const oldButtons = (n.data as ButtonNodeData).buttons ?? [];
-				const buttons = oldButtons.filter((btn: NodeButton) => btn.target !== nodeId);
-				return {
-					...n,
-					data: {
-						...n.data,
-						buttons,
-					}
-				};
-			});
-			return removeOrphanNodes(filteredNodes, 'menu');
-		}, setNodes, nodes);
+		undoManager.withUndo(
+			(nds) => {
+				let filteredNodes = nds.filter((n) => n.id !== nodeId);
+				filteredNodes = filteredNodes.map((n) => {
+					const oldButtons = (n.data as ButtonNodeData).buttons ?? [];
+					const buttons = oldButtons.filter((btn: NodeButton) => btn.target !== nodeId);
+					return {
+						...n,
+						data: {
+							...n.data,
+							buttons,
+						}
+					};
+				});
+				return removeOrphanNodes(filteredNodes, 'menu');
+			},
+			setNodes
+		);
 		setEditNodeId((id) => (id === nodeId ? null : id));
-	}, [undoManager, setNodes, nodes]);
+	}, [setNodes]);
 
 	const handleCollapseNode = useCallback((nodeId: string, expanded: boolean) => {
 		setNodes((nds) =>
@@ -141,16 +159,22 @@ export default function FlowEditor() {
 		fileInputRef.current?.click();
 	};
 
-	const handleAutoLayout = () => {
+	const handleAutoLayout = useCallback(() => {
 		undoManager.withUndo(
 			nodes => getLayoutedElements(nodes, edges, 'LR'),
 			setNodes, nodes
 		);
 		saveNodesToStorage(nodes);
-	};
-
+		reactFlowInstance.fitView();
+	}, []);
+	
 	const handleSave = () => {
-		saveNodesToStorage(nodes);
+		try {
+			const yamlString = nodesToYaml(nodes);
+			onSave && onSave(yamlString);
+		} catch (e) {
+			onError && onError(e as Error);
+		}
 	};
 
 	const handleSaveYaml = () => {
@@ -237,8 +261,15 @@ export default function FlowEditor() {
 	);
 
 	const handleNodesLoaded = useCallback((newNodes: Node<ButtonNodeData>[]) => {
-		setNodes(newNodes);
-		saveNodesToStorage(newNodes);
+		const nodes = getLayoutedElements(newNodes, getEdgesFromNodes(newNodes, edgeType), 'LR')
+		setNodes(nodes);
+		saveNodesToStorage(nodes);
+		const rootNode = nodes[0];
+		reactFlowInstance.setCenter(
+			rootNode.position.x + (rootNode.measured?.width || 180) / 2,
+			rootNode.position.y + (rootNode.measured?.height || 100) / 2,
+			{ zoom: 1.2, duration: 800 }
+		);
 	}, []);
 
 	const handlePaneClick = useCallback(() => {

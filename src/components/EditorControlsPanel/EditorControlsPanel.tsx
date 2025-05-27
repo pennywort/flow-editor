@@ -64,22 +64,24 @@ const EditorControlsPanel: React.FC<Props> = ({
 			>
                 Распределить
 			</Button>
-			<Button
+			{/* @ts-expect-error: for debugging */}
+			{window.debugChatBotEditor && <Button
 				size="medium"
 				variant="contained"
 				color="#9147FF"
 				onClick={onOpenFileDialog}
 			>
-                Загрузить YAML
-			</Button>
-			<Button
+				Загрузить YAML
+			</Button>}
+			{/* @ts-expect-error: for debugging */}
+			{window.debugChatBotEditor && <Button
 				size="medium"
 				variant="contained"
 				color="#8E8DCC"
 				onClick={onSaveToYaml}
 			>
-                Выгрузить YAML
-			</Button>
+				Выгрузить YAML
+			</Button>}
 			<input
 				type="file"
 				accept=".yaml,.yml"

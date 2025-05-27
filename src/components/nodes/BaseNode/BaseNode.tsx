@@ -5,6 +5,7 @@ import { ReactComponent as DeleteSvg } from '../../shared/svg/delete.svg';
 import { ReactComponent as EditSvg } from '../../shared/svg/edit.svg';
 import { useSearch } from '../../../context/SearchContext';
 import { MarkdownRenderer, SvgIcon } from '../../shared';
+import { highlightText } from '../../../utils/highlight';
 
 import { baseNodeStyles } from './styles';
 
@@ -54,7 +55,9 @@ const BaseNode = (props: BaseNodeProps) => {
 	return (
 		<div>
 			<div style={mergedLabelStyles}>
-				<MarkdownRenderer text={data.label} search={search} />
+				<span style={baseNodeStyles.headerEllipsis}>
+					{highlightText(data.label, search)}
+				</span>
 				<div style={{ flexShrink: 0, marginLeft: 8 }}>
 					<SvgIcon onClick={() => handleEdit(id)} >
 						<EditSvg />

@@ -53,7 +53,7 @@ export function getEdgesFromNodes(nodes: Node<ButtonNodeData>[], edgeType: strin
 			return {
 				id: `e-${node.id}-btn-${idx}`,
 				source: node.id,
-				target: b.target!,
+				target: b.target,
 				sourceHandle: `btn-${idx}`,
 				targetHandle: null,
 				type: edgeType,
